@@ -60,11 +60,15 @@ def stream_ctr():
 	data = request.get_json(force=True)
 	
 	log.info(data['command'])
-	
-	try :
-		result = steam_ctr_exe(data['command'])
-	except Exception as e:
-		log.warning('steam_ctr_exe : %s', str(e))
+	if (command == 'Start') :
+		result = steam_ctr_start()
+	elif (command == 'Stop') :
+		result = steam_ctr_stop()
+	elif (command == 'Restart') :
+		result = steam_ctr_restart()
+	else:
+		log.info('invalid command')
+		result = 'None'
 	
 	log.debug('stream_ctr END')
 	return jsonify(result=result)
@@ -94,11 +98,15 @@ def activity_ctr():
 	elif (data['command'] == 'Stop') :
 		# Stop the activity controller
 		revoke(act_job.id, terminate=True, signal='SIGTERM')
+		# Stop the agitation controller
+		revoke(agi_job.id, terminate=True, signal='SIGTERM')
 	elif (data['command'] == 'Calibrate') :
 		# Calibrate the normale sound level
 		result = normal_levels(data['agi_normal'])
-		# TODO : adjust intervals
-	
+		#TODO : adjust intervals
+	else:
+		log.info('invalid command')
+		result = 'None'
 	
 	log.debug('activity_ctr END')
 	return jsonify(result=result)
@@ -123,7 +131,10 @@ def media_ctr():
 		result = media_del(data['num'])
 	elif (data['command'] == 'List') :
 		result = media_list()
-	
+	else:
+		log.info('invalid command')
+		result = 'None'
+		
 	log.debug('media_ctr END')
 	return jsonify(result=result)
 	
