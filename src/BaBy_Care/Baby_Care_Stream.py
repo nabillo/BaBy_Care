@@ -26,6 +26,7 @@ def steam_ctr_start() :
 	@Return   result.
 	"""
 	
+	log.debug('Start streamer')
 	try :
 		log.info('Start Gstreamer')
 		
@@ -47,6 +48,7 @@ def steam_ctr_stop() :
 	@Return   result.
 	"""
 	
+	log.debug('Stop streamer')
 	try :
 		log.info('Stop Gstreamer')
 		
@@ -68,7 +70,7 @@ def steam_ctr_restart() :
 	@Return   result.
 	"""
 	
-	log.info('Restart Gstreamer')
+	log.debug('Restart Streamer')
 	try :
 		log.info('Stop Gstreamer')
 		
