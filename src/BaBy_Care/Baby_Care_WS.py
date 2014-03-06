@@ -21,14 +21,14 @@ celery.conf.update(app.config)
 
 db = ZODB(app)
 
-with app.test_request_context():
-  if not db.has_key('lvl_normal'):
+with app.test_request_context() :
+	if not db.has_key('lvl_normal') :
 		db['lvl_normal'] = app.config['LVL_NORMAL']
-	if not db.has_key('normal_interval'):
+	if not db.has_key('normal_interval') :
 		db['normal_interval'] = app.config['NORMAL_INTERVAL']
-	if not db.has_key('active_interval'):
+	if not db.has_key('active_interval') :
 		db['active_interval'] = app.config['ACTIVE_INTERVAL']
-	if not db.has_key('agi_normal'):
+	if not db.has_key('agi_normal') :
 		db['agi_normal'] = app.config['AGI_NORMAL']
 
 
@@ -47,7 +47,7 @@ log.addHandler(fh)
 from Baby_Care_Stream import steam_ctr_exe
 
 @app.route('/stream_ctr.json', methods=['POST'])
-def stream_ctr():
+def stream_ctr() :
 	"""Control streamer.
 	
 	@Imput    command : [Start,Stop,Restart].
@@ -66,7 +66,7 @@ def stream_ctr():
 		result = steam_ctr_stop()
 	elif (command == 'Restart') :
 		result = steam_ctr_restart()
-	else:
+	else :
 		log.info('invalid command')
 		result = 'None'
 	
@@ -74,11 +74,11 @@ def stream_ctr():
 	return jsonify(result=result)
 
 @app.route('/activity_ctr.json', methods=['POST'])
-def activity_ctr():
+def activity_ctr() :
 	"""Control activity.
 	
 	@Imput    command : [Start,Stop,Calibrate].
-	          agi_normal (decimal).
+						agi_normal (decimal).
 	@Return   result.
 	"""
 	
@@ -91,7 +91,7 @@ def activity_ctr():
 		# Start the agitation controller
 		agi_job = agitation_ctr_exe.delay()
 		result = agi_job.AsyncResult(agi_job.id).state
-		if (result == states.SUCCESS):
+		if (result == states.SUCCESS) :
 			# Start the activity controller
 			act_job = activity_ctr_exe.delay()
 			result = act_job.AsyncResult(act_job.id).state
@@ -104,7 +104,7 @@ def activity_ctr():
 		# Calibrate the normale sound level
 		result = normal_levels(data['agi_normal'])
 		#TODO : adjust intervals
-	else:
+	else :
 		log.info('invalid command')
 		result = 'None'
 	
@@ -112,11 +112,11 @@ def activity_ctr():
 	return jsonify(result=result)
 	
 @app.route('/media_ctr.json', methods=['POST'])
-def media_ctr():
+def media_ctr() :
 	"""Control media center.
 	
 	@Imput    command : [Upload,Delete,List,Play,Stop,VolUp,VolDown].
-	          num (decimal).
+						num (decimal).
 	@Return   result.
 	"""
 	
@@ -131,14 +131,14 @@ def media_ctr():
 		result = media_del(data['num'])
 	elif (data['command'] == 'List') :
 		result = media_list()
-	else:
+	else :
 		log.info('invalid command')
 		result = 'None'
 		
 	log.debug('media_ctr END')
 	return jsonify(result=result)
 	
-if __name__ == '__main__':
+if __name__ == '__main__' :
 	app.run(
 			host="0.0.0.0",
 			port=int(app.config['PORT'])
