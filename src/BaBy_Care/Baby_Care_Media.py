@@ -57,7 +57,7 @@ def media_list() :
 	
 	log.debug('list songs')
 	try :
-		subprocess.check_output('mpc -f del %s',num)
+		subprocess.check_output('mpc playlist -f " [%position%) %title%]"')
 	
 		log.info('file deleted')
 		result = 'Success'
