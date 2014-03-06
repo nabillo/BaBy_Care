@@ -24,150 +24,149 @@ FRAMESIZE   = 1024
 PITCHALG    = aubio_pitch_yin
 PITCHOUT    = aubio_pitchm_freq
 
-GPIO_CHANNEL = 23
 global refresh_count1
 global refresh_count2
 
-def sound_level():
-  [length, data]=recorder.read()
-  # convert to an array of floats
-  floats = struct.unpack('f'*FRAMESIZE,data)
-  # copy floats into structure
-  for i in range(len(floats)):
-    fvec_write_sample(buf, floats[i], 0, i)
-  # find pitch of audio frame
-  freq = aubio_pitchdetection(detect,buf)
-  # find energy of audio frame
-  energy = vec_local_energy(buf)
-  log.info("{:10.4f} {:10.4f}".format(freq,energy))
-  
-  return energy
+def sound_level() :
+	[length, data]=recorder.read()
+	# convert to an array of floats
+	floats = struct.unpack('f'*FRAMESIZE,data)
+	# copy floats into structure
+	for i in range(len(floats)):
+		fvec_write_sample(buf, floats[i], 0, i)
+	# find pitch of audio frame
+	freq = aubio_pitchdetection(detect,buf)
+	# find energy of audio frame
+	energy = vec_local_energy(buf)
+	log.info("{:10.4f} {:10.4f}".format(freq,energy))
+	
+	return energy
 
 # Evaluate sound level 
-def activity_check():
-  energy = sound_level()
-  
-  if (energy < lvl_normal) :
-    # Quiet state
-    log.info('Quiet state')
-    # We reset timer counter for agitation
-    refresh_count1 = 0
-    refresh_count2 = 0
-    
-  elif ((energy >= lvl_normal) and (energy < lvl_normal + normal_interval)) :
-    # Normal state
-    log.info('Normal state')
-    refresh_count2 = 0
-    # If agitation stay higher than normal for a configurable periode 
-    if (mvt_count > agi_normal) and (refresh_count1 > app.config['REFRESH_COUNT']) :
-      # We reduce the normal level
-      lvl_normal = lvl_normal * (app.config['REDUCTION_RATE']/100)
-      refresh_count1 = 0
-      
-    # If agitation is higher we increment timer counter
-    elif (mvt_count > agi_normal) :
-      refresh_count1 = refresh_count1 + 1
-      
-    # If agitation return to normal we reset timer counter
-    else :
-      refresh_count1 = 0
-    
-  elif ((energy >= lvl_normal + normal_interval) and (energy < lvl_normal + normal_interval + active_interval)) :
-    # Active state
-    log.info('Active state')
-    # We reset timer counter for agitation
-    refresh_count1 = 0
-    # If active period is higher than a configurable periode 
-    if (refresh_count2 > app.config['REFRESH_COUNT']) :
-      # TODO : If agitation is higher we send silent notification
-      # if (mvt_count > agi_normal) :
-      # We increase the normal level
-      lvl_normal = lvl_normal * (1+(app.config['INCREASE_RATE']/100))
-      refresh_count2 = 0
-    else :
-      refresh_count2 = refresh_count2 + 1
-    
-  elif (energy >= lvl_normal + normal_interval + active_interval) :
-    # Criying state
-    log.info('Criying state')
-    # We reset timer counter for agitation
-    refresh_count1 = 0
-    refresh_count2 = 0
-    # Tigger alarm
-    
+def activity_check() :
+	energy = sound_level()
+	
+	if (energy < lvl_normal) :
+		# Quiet state
+		log.info('Quiet state')
+		# We reset timer counter for agitation
+		refresh_count1 = 0
+		refresh_count2 = 0
+		
+	elif ((energy >= lvl_normal) and (energy < lvl_normal + normal_interval)) :
+		# Normal state
+		log.info('Normal state')
+		refresh_count2 = 0
+		# If agitation stay higher than normal for a configurable periode 
+		if (mvt_count > agi_normal) and (refresh_count1 > app.config['REFRESH_COUNT']) :
+			# We reduce the normal level
+			lvl_normal = lvl_normal * (app.config['REDUCTION_RATE']/100)
+			refresh_count1 = 0
+			
+		# If agitation is higher we increment timer counter
+		elif (mvt_count > agi_normal) :
+			refresh_count1 = refresh_count1 + 1
+			
+		# If agitation return to normal we reset timer counter
+		else :
+			refresh_count1 = 0
+		
+	elif ((energy >= lvl_normal + normal_interval) and (energy < lvl_normal + normal_interval + active_interval)) :
+		# Active state
+		log.info('Active state')
+		# We reset timer counter for agitation
+		refresh_count1 = 0
+		# If active period is higher than a configurable periode 
+		if (refresh_count2 > app.config['REFRESH_COUNT']) :
+			# TODO : If agitation is higher we send silent notification
+			# if (mvt_count > agi_normal) :
+			# We increase the normal level
+			lvl_normal = lvl_normal * (1+(app.config['INCREASE_RATE']/100))
+			refresh_count2 = 0
+		else :
+			refresh_count2 = refresh_count2 + 1
+		
+	elif (energy >= lvl_normal + normal_interval + active_interval) :
+		# Criying state
+		log.info('Criying state')
+		# We reset timer counter for agitation
+		refresh_count1 = 0
+		refresh_count2 = 0
+		# Tigger alarm
+		
 # Retreive number of mvt per minute
-def agitation_count():
-  global mvt_counter
-  log.info('agitation count : %d',mvt_counter)
-  db['mvt_count'] = mvt_counter
-  mvt_counter = 0
+def agitation_count() :
+	global mvt_counter
+	log.info('agitation count : %d',mvt_counter)
+	db['mvt_count'] = mvt_counter
+	mvt_counter = 0
 
-def mvt_counter(channel):  
-  global mvt_counter
-  mvt_counter = mvt_counter + 1
+def mvt_counter(channel) :  
+	global mvt_counter
+	mvt_counter = mvt_counter + 1
 
 # Detect agitation from GPIO
-def agitation_detect():
-  GPIO.setmode(GPIO.BCM)
-  # GPIO 24 set up as an input, pulled down, connected to 3V3 on button press
-  GPIO.setup(GPIO_CHANNEL, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-  GPIO.add_event_detect(GPIO_CHANNEL, GPIO.RISING, callback=mvt_counter, bouncetime=300)  
+def agitation_detect() :
+	GPIO.setmode(GPIO.BCM)
+	# GPIO 24 set up as an input, pulled down, connected to 3V3 on button press
+	GPIO.setup(GPIO_CHANNEL, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+	GPIO.add_event_detect(GPIO_CHANNEL, GPIO.RISING, callback=mvt_counter, bouncetime=300)  
 
 # Free resources
-def terminate():
-  signal.alarm(0)
-  recorder=null
-  detect=null
-  buf=null
-  GPIO.cleanup()
-  sys.exit(0)
-  
+def terminate() :
+	signal.alarm(0)
+	recorder=null
+	detect=null
+	buf=null
+	GPIO.cleanup()
+	sys.exit(0)
+	
 # handle signal SIGTERM to stop controller gracefully
-def handler(signum, frame):
-    log.info('signal : %d',signum)
-    if (signum == signal.SIGTERM) :
-      terminate()
-    elif (signum == signal.SIGALRM) :
-      activity_check()
-    elif (signum == signal.SIGPROF) :
-      agitation_count()
+def handler(signum, frame) :
+	log.info('signal : %d',signum)
+	if (signum == signal.SIGTERM) :
+		terminate()
+	elif (signum == signal.SIGALRM) :
+		activity_check()
+	elif (signum == signal.SIGPROF) :
+		agitation_count()
 
 @celery.task
-def activity_ctr_exe():
-  global recorder
-  global detect
-  global buf
+def activity_ctr_exe() :
+	global recorder
+	global detect
+	global buf
 
-  refresh_count1 = 0
-  refresh_count2 = 0
-    
-  # Set the signal handler
-  signal.signal(signal.SIGTERM, handler)
-  signal.signal(signal.SIGALRM, handler)
+	refresh_count1 = 0
+	refresh_count2 = 0
+	
+	# Set the signal handler
+	signal.signal(signal.SIGTERM, handler)
+	signal.signal(signal.SIGALRM, handler)
 
-  # set up audio input
-  card = 'sysdefault:CARD=Microphone'
-  recorder = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NONBLOCK, card)
-  recorder.setchannels(CHANNELS)
-  recorder.setrate(RATE)
-  recorder.setformat(INFORMAT)
-  recorder.setperiodsize(FRAMESIZE)
-  
-  # set up pitch detect
-  detect = new_aubio_pitchdetection(FRAMESIZE,FRAMESIZE/2,CHANNELS,RATE,PITCHALG,PITCHOUT)
-  buf = new_fvec(FRAMESIZE,CHANNELS)
-  
-  # setup periodic alarm to evaluate sound level and set agitation level
-  signal.alarm(app.config['REFRESH_RATE'])
+	# set up audio input
+	card = 'sysdefault:CARD=Microphone'
+	recorder = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NONBLOCK, card)
+	recorder.setchannels(CHANNELS)
+	recorder.setrate(RATE)
+	recorder.setformat(INFORMAT)
+	recorder.setperiodsize(FRAMESIZE)
+	
+	# set up pitch detect
+	detect = new_aubio_pitchdetection(FRAMESIZE,FRAMESIZE/2,CHANNELS,RATE,PITCHALG,PITCHOUT)
+	buf = new_fvec(FRAMESIZE,CHANNELS)
+	
+	# setup periodic alarm to evaluate sound level and set agitation level
+	signal.alarm(app.config['REFRESH_RATE'])
 
 @celery.task
-def agitation_ctr_exe():
-  with app.app_context():
-    signal.setitimer(signal.ITIMER_PROF, 60, 60)
-    agitation_detect()
+def agitation_ctr_exe() :
+	with app.app_context():
+		signal.setitimer(signal.ITIMER_PROF, 60, 60)
+		agitation_detect()
 
 # calibrate the normal level to actual sound level
-def normal_levels(agi_normal):
-  db['agi_normal'] = agi_normal
-  db['lvl_normal'] = sound_level()
-  log.info("Normal level : {:10.4f}".format(db['lvl_normal']))
+def normal_levels(agi_normal) :
+	db['agi_normal'] = agi_normal
+	db['lvl_normal'] = sound_level()
+	log.info("Normal level : {:10.4f}".format(db['lvl_normal']))
