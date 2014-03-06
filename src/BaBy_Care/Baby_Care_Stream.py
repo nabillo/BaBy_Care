@@ -19,7 +19,7 @@ def steam_ctr_exe(command):
 	#pid = subprocess.check_output(gst_pid, shell=True)
 	#log.info('pid %s', pid)
 	
-def steam_ctr_start():
+def steam_ctr_start() :
 	"""Start streamer.
 	
 	@Imput    .
@@ -40,7 +40,7 @@ def steam_ctr_start():
 		result = 'Error'
 	return result
 	
-def steam_ctr_stop():
+def steam_ctr_stop() :
 	"""Stop streamer.
 	
 	@Imput    .
@@ -61,7 +61,7 @@ def steam_ctr_stop():
 		result = 'Error'
 	return result
 	
-def steam_ctr_restart():
+def steam_ctr_restart() :
 	"""Restart streamer.
 	
 	@Imput    .
