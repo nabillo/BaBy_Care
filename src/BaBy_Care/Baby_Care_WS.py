@@ -86,7 +86,7 @@ def media_ctr() :
 	data = request.get_json(force=True)
 	
 	if (data['command'] == 'Upload') :
-		result = media_upload()
+		result = media_upload(request.files.getlist("file[]"))
 	elif (data['command'] == 'Delete') :
 		result = media_del(data['titles'])
 	elif (data['command'] == 'List') :
