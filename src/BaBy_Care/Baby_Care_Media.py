@@ -13,13 +13,12 @@ def allowed_file(filename) :
 	return '.' in filename and \
 				 filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-def media_upload() :
+def media_upload(files) :
 	"""Save file to SD card."""
 	
 	log.debug('upload file')
-	uploaded_files = request.files.getlist("file[]")
 	result = 0
-	for file in uploaded_files:
+	for file in files:
 		# Check if the file is one of the allowed types/extensions
 		if file and allowed_file(file.filename):
 			# Make the filename safe, remove unsupported chars
@@ -34,17 +33,42 @@ def media_upload() :
 				log.debug('file too large : %s',filename)
 		else:
 			log.debug('file not allowed : %s',filename)
+	
+	# Reload all song on playlist
+	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
 	return result
 	
-def media_del(num) :
-	"""Delete file from playlist and SD card."""
+def media_del(files) :
+	"""Delete file from SD card and reload playlist."""
 	
 	log.debug('delete file')
-	try :
-		subprocess.call('mpc del %s',num)
+	result = 0
+	for file in files:
+		try :
+			#delete file from directory
+			subprocess.call('rm -f %s',file)
+			
+			log.info('file deleted : %s',file)
+			result = result + 1
+		except subprocess.CalledProcessError :
+			# file not deleted
+			log.warning('file not deleted')
+			log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 	
-		log.info('file deleted')
-		result = 'Success'
+	# Reload all song on playlist
+	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
+	return result
+	
+def media_list() :
+	"""List song files."""
+	
+	log.debug('list songs')
+	try :
+		titles = subprocess.check_output('')
+		
+		log.info('Playlist titles : %s',titles)
+		titles = titles.splitlines()
+		result = titles
 	except subprocess.CalledProcessError :
 		# file not deleted
 		log.warning('file not deleted')
@@ -52,18 +76,66 @@ def media_del(num) :
 		result = 'Error'
 	return result
 	
-def media_list() :
-	"""Delete file from playlist and SD card."""
+def media_Play() :
+	"""Play playlist songs."""
 	
-	log.debug('list songs')
+	log.debug('Play songs')
 	try :
-		subprocess.check_output('mpc playlist -f " [%position%) %title%]"')
+		subprocess.call('mpc play ')
 	
-		log.info('file deleted')
+		log.info('Play')
 		result = 'Success'
 	except subprocess.CalledProcessError :
 		# file not deleted
-		log.warning('file not deleted')
+		log.warning('Play error')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_Stop() :
+	"""Stop playlist songs."""
+	
+	log.debug('Stop songs')
+	try :
+		subprocess.call('mpc stop ')
+	
+		log.info('stop')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('stop error')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_VolUp() :
+	"""Volume Up."""
+	
+	log.debug('Volume Up')
+	try :
+		subprocess.call('mpc volume + ')
+	
+		log.info('Volume increased')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('Volume increase error')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_VolDown() :
+	"""Volume down."""
+	
+	log.debug('Volume Down')
+	try :
+		subprocess.call('mpc volume - ')
+	
+		log.info('Volume decreased')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('Volume decrease error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
 	return result
