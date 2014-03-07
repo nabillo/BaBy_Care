@@ -76,7 +76,7 @@ def media_ctr() :
 	"""Control media center.
 	
 	@Imput    command : [Upload,Delete,List,Play,Stop,VolUp,VolDown].
-						num (decimal).
+	          titles.
 	@Return   result.
 	"""
 	
@@ -86,11 +86,19 @@ def media_ctr() :
 	data = request.get_json(force=True)
 	
 	if (data['command'] == 'Upload') :
-		result = media_upload()
+		result = media_upload(request.files.getlist("file[]"))
 	elif (data['command'] == 'Delete') :
-		result = media_del(data['num'])
+		result = media_del(data['titles'])
 	elif (data['command'] == 'List') :
 		result = media_list()
+	elif (data['command'] == 'Play') :
+		result = media_Play()
+	elif (data['command'] == 'Stop') :
+		result = media_Stop()
+	elif (data['command'] == 'VolUp') :
+		result = media_VolUp()
+	elif (data['command'] == 'VolDown') :
+		result = media_VolDown()
 	else :
 		log.info('invalid command')
 		result = 'None'
