@@ -91,6 +91,14 @@ def media_ctr() :
 		result = media_del(data['num'])
 	elif (data['command'] == 'List') :
 		result = media_list()
+	elif (data['command'] == 'Play') :
+		result = media_Play()
+	elif (data['command'] == 'Stop') :
+		result = media_Stop()
+	elif (data['command'] == 'VolUp') :
+		result = media_VolUp()
+	elif (data['command'] == 'VolDown') :
+		result = media_VolDown()
 	else :
 		log.info('invalid command')
 		result = 'None'
