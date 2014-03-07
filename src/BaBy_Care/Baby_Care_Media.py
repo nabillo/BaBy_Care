@@ -42,7 +42,7 @@ def media_del(num) :
 	log.debug('delete file')
 	try :
 		subprocess.call('mpc del %s',num)
-	
+		
 		log.info('file deleted')
 		result = 'Success'
 	except subprocess.CalledProcessError :
@@ -57,13 +57,78 @@ def media_list() :
 	
 	log.debug('list songs')
 	try :
-		subprocess.check_output('mpc playlist -f " [%position%) %title%]"')
-	
-		log.info('file deleted')
-		result = 'Success'
+		titles = subprocess.check_output('mpc playlist -f " [%position%) %title%]"')
+		
+		log.info('Playlist titles : %s',titles)
+		titles = titles.splitlines()
+		result = titles
 	except subprocess.CalledProcessError :
 		# file not deleted
 		log.warning('file not deleted')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_Play() :
+	"""Play playlist songs."""
+	
+	log.debug('Play songs')
+	try :
+		subprocess.call('mpc play ')
+	
+		log.info('Play')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('Play error')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_Stop() :
+	"""Stop playlist songs."""
+	
+	log.debug('Stop songs')
+	try :
+		subprocess.call('mpc stop ')
+	
+		log.info('stop')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('stop error')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_VolUp() :
+	"""Volume Up."""
+	
+	log.debug('Volume Up')
+	try :
+		subprocess.call('mpc volume + ')
+	
+		log.info('Volume increased')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('Volume increase error')
+		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+		result = 'Error'
+	return result
+	
+def media_VolDown() :
+	"""Volume down."""
+	
+	log.debug('Volume Down')
+	try :
+		subprocess.call('mpc volume - ')
+	
+		log.info('Volume decreased')
+		result = 'Success'
+	except subprocess.CalledProcessError :
+		# file not deleted
+		log.warning('Volume decrease error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
 	return result
