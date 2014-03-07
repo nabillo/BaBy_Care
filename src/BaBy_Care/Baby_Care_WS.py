@@ -76,7 +76,7 @@ def media_ctr() :
 	"""Control media center.
 	
 	@Imput    command : [Upload,Delete,List,Play,Stop,VolUp,VolDown].
-						num (decimal).
+	          titles.
 	@Return   result.
 	"""
 	
@@ -88,7 +88,7 @@ def media_ctr() :
 	if (data['command'] == 'Upload') :
 		result = media_upload()
 	elif (data['command'] == 'Delete') :
-		result = media_del(data['num'])
+		result = media_del(data['titles'])
 	elif (data['command'] == 'List') :
 		result = media_list()
 	elif (data['command'] == 'Play') :
