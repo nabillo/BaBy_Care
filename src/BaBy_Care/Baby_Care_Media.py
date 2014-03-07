@@ -13,13 +13,12 @@ def allowed_file(filename) :
 	return '.' in filename and \
 				 filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-def media_upload() :
+def media_upload(files) :
 	"""Save file to SD card."""
 	
 	log.debug('upload file')
-	uploaded_files = request.files.getlist("file[]")
 	result = 0
-	for file in uploaded_files:
+	for file in files:
 		# Check if the file is one of the allowed types/extensions
 		if file and allowed_file(file.filename):
 			# Make the filename safe, remove unsupported chars
@@ -34,30 +33,38 @@ def media_upload() :
 				log.debug('file too large : %s',filename)
 		else:
 			log.debug('file not allowed : %s',filename)
+	
+	# Reload all song on playlist
+	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
 	return result
 	
-def media_del(num) :
-	"""Delete file from playlist and SD card."""
+def media_del(files) :
+	"""Delete file from SD card and reload playlist."""
 	
 	log.debug('delete file')
-	try :
-		subprocess.call('mpc del %s',num)
-		
-		log.info('file deleted')
-		result = 'Success'
-	except subprocess.CalledProcessError :
-		# file not deleted
-		log.warning('file not deleted')
-		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
-		result = 'Error'
+	result = 0
+	for file in files:
+		try :
+			#delete file from directory
+			subprocess.call('rm -f %s',file)
+			
+			log.info('file deleted : %s',file)
+			result = result + 1
+		except subprocess.CalledProcessError :
+			# file not deleted
+			log.warning('file not deleted')
+			log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
+	
+	# Reload all song on playlist
+	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
 	return result
 	
 def media_list() :
-	"""Delete file from playlist and SD card."""
+	"""List song files."""
 	
 	log.debug('list songs')
 	try :
-		titles = subprocess.check_output('mpc playlist -f " [%position%) %title%]"')
+		titles = subprocess.check_output('')
 		
 		log.info('Playlist titles : %s',titles)
 		titles = titles.splitlines()
