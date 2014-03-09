@@ -28,7 +28,7 @@ def steam_ctr_start() :
 	try :
 		log.info('Start Gstreamer')
 		
-		subprocess.call(gst_launch,shell=True)
+		subprocess.call(gst_launch)
 		
 		log.info('Gstreamer Started')
 		result = 'Success'
