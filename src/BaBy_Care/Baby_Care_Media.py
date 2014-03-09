@@ -6,6 +6,8 @@ Created on Mar 04, 2014
 
 import os
 from werkzeug import secure_filename
+from BaBy_Care import app, log
+import subprocess
 
 def allowed_file(filename) :
 	"""For a given file, return whether it's an allowed type or not."""
@@ -64,6 +66,7 @@ def media_list() :
 	
 	log.debug('list songs')
 	try :
+		#TODO : list command
 		titles = subprocess.check_output('')
 		
 		log.info('Playlist titles : %s',titles)

@@ -6,14 +6,12 @@ Created on Feb 19, 2014
 
 import alsaaudio, struct
 from aubio.task import *
-from celery import Celery
-from celery.task.control import revoke
-from celery.result import AsyncResult
+
+from BaBy_Care import app, celery, log, db
+
 import signal
 import RPi.GPIO as GPIO
 
-
-celery = Celery('baby_care')
 
 # constants
 
@@ -26,6 +24,15 @@ PITCHOUT    = aubio_pitchm_freq
 
 global refresh_count1
 global refresh_count2
+
+if not db.has_key('lvl_normal') :
+	db['lvl_normal'] = app.config['LVL_NORMAL']
+if not db.has_key('normal_interval') :
+	db['normal_interval'] = app.config['NORMAL_INTERVAL']
+if not db.has_key('active_interval') :
+	db['active_interval'] = app.config['ACTIVE_INTERVAL']
+if not db.has_key('agi_normal') :
+	db['agi_normal'] = app.config['AGI_NORMAL']
 
 def sound_level() :
 	[length, data]=recorder.read()
@@ -46,32 +53,32 @@ def sound_level() :
 def activity_check() :
 	energy = sound_level()
 	
-	if (energy < lvl_normal) :
+	if (energy < db['lvl_normal']) :
 		# Quiet state
 		log.info('Quiet state')
 		# We reset timer counter for agitation
 		refresh_count1 = 0
 		refresh_count2 = 0
 		
-	elif ((energy >= lvl_normal) and (energy < lvl_normal + normal_interval)) :
+	elif ((energy >= db['lvl_normal']) and (energy < db['lvl_normal'] + db['normal_interval'])) :
 		# Normal state
 		log.info('Normal state')
 		refresh_count2 = 0
 		# If agitation stay higher than normal for a configurable periode 
-		if (mvt_count > agi_normal) and (refresh_count1 > app.config['REFRESH_COUNT']) :
+		if (db['mvt_count'] > db['agi_normal']) and (refresh_count1 > app.config['REFRESH_COUNT']) :
 			# We reduce the normal level
-			lvl_normal = lvl_normal * (app.config['REDUCTION_RATE']/100)
+			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE']/100)
 			refresh_count1 = 0
 			
 		# If agitation is higher we increment timer counter
-		elif (mvt_count > agi_normal) :
+		elif (db['mvt_count'] > db['agi_normal']) :
 			refresh_count1 = refresh_count1 + 1
 			
 		# If agitation return to normal we reset timer counter
 		else :
 			refresh_count1 = 0
 		
-	elif ((energy >= lvl_normal + normal_interval) and (energy < lvl_normal + normal_interval + active_interval)) :
+	elif ((energy >= db['lvl_normal'] + db['normal_interval']) and (energy < db['lvl_normal'] + db['normal_interval'] + db['active_interval'])) :
 		# Active state
 		log.info('Active state')
 		# We reset timer counter for agitation
@@ -79,14 +86,14 @@ def activity_check() :
 		# If active period is higher than a configurable periode 
 		if (refresh_count2 > app.config['REFRESH_COUNT']) :
 			# TODO : If agitation is higher we send silent notification
-			# if (mvt_count > agi_normal) :
+			# if (db['mvt_count'] > db['agi_normal']) :
 			# We increase the normal level
-			lvl_normal = lvl_normal * (1+(app.config['INCREASE_RATE']/100))
+			db['lvl_normal'] = db['lvl_normal'] * (1+(app.config['INCREASE_RATE']/100))
 			refresh_count2 = 0
 		else :
 			refresh_count2 = refresh_count2 + 1
 		
-	elif (energy >= lvl_normal + normal_interval + active_interval) :
+	elif (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
 		# Criying state
 		log.info('Criying state')
 		# We reset timer counter for agitation
@@ -114,8 +121,12 @@ def agitation_detect() :
 
 # Free resources
 def terminate() :
+	global recorder
+	global detect
+	global buf
+	
 	signal.alarm(0)
-	recorder=null
+	recorder = Null
 	detect=null
 	buf=null
 	GPIO.cleanup()

@@ -4,7 +4,9 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-from BaBy_Care import app
+from BaBy_Care import app, log
+from Baby_Care_Stream import steam_ctr_start, steam_ctr_stop, steam_ctr_restart
+from flask import request, jsonify
 
 @app.route('/stream_ctr.json', methods=['POST'])
 def stream_ctr() :
@@ -20,11 +22,11 @@ def stream_ctr() :
 	data = request.get_json(force=True)
 	
 	log.info(data['command'])
-	if (command == 'Start') :
+	if (data['command'] == 'Start') :
 		result = steam_ctr_start()
-	elif (command == 'Stop') :
+	elif (data['command'] == 'Stop') :
 		result = steam_ctr_stop()
-	elif (command == 'Restart') :
+	elif (data['command'] == 'Restart') :
 		result = steam_ctr_restart()
 	else :
 		log.info('invalid command')

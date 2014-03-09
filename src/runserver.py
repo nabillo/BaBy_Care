@@ -7,4 +7,4 @@ Created on Mar 6, 2014
 from BaBy_Care import app
 app.run(
 		host="0.0.0.0",
-		port=int(app.config['PORT'])
+		port=int(app.config['PORT']))

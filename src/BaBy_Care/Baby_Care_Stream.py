@@ -4,19 +4,18 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-# Command sentence
-#gst_pid = 'ps -aef | grep "gst\-launch" | grep -v grep | awk "{print $2}"'
+from subprocess import Popen, PIPE
 
-#gst_kill = 'killall gst-launch-1.0'
-#gst_launch = 'gst-launch-1.0 v4l2src  ! \"video/x-raw,width=640,height=480,framerate=15/1\" ! \
-#            omxh264enc target-bitrate=1000000 control-rate=variable ! \
-#            video/x-h264,profile=high ! h264parse ! queue ! \
-#            flvmux name=mux alsasrc device=hw:1 ! audioresample ! audio/x-raw,rate=48000 ! \
-#            queue ! voaacenc bitrate=32000 ! queue ! mux. mux. ! \
-#            rtmpsink location=\"rtmp://example.com/myapp/mystream live=1\"' 
+# Command sentence
+gst_pid = 'ps -aef | grep "gst\-launch" | grep -v grep | awk "{print $2}"'
+
+gst_kill = 'killall gst-launch-1.0'
+gst_launch = ["gst-launch-1.0", "" ]
 
 #pid = subprocess.check_output(gst_pid, shell=True)
 #log.info('pid %s', pid)
+
+gst = subprocess.Popen(gst_launch, stdout=subprocess.PIPE)
 	
 def steam_ctr_start() :
 	"""Start streamer.
@@ -29,7 +28,7 @@ def steam_ctr_start() :
 	try :
 		log.info('Start Gstreamer')
 		
-		subprocess.call(gst_launch)
+		subprocess.call(gst_launch,shell=True)
 		
 		log.info('Gstreamer Started')
 		result = 'Success'

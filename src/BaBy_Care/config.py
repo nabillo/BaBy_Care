@@ -5,15 +5,17 @@ Created on Feb 19, 2014
 '''
 
 # Private app key
-SECRET_KEY= '?\xbf,\xb4\x8d\xa3"<\x9c\xb0@\x0f5\xab,w\xee\x8d$0\x13\x8b83'
+SECRET_KEY = '?\xbf,\xb4\x8d\xa3"<\x9c\xb0@\x0f5\xab,w\xee\x8d$0\x13\x8b83'
+
+PORT = 12800
 
 # Set to False on production
 DEBUG = True
 
 # Celery broker and backend url
 #TODO : normalyse ports
-CELERY_BROKER_URL= 'redis://localhost:6379',
-CELERY_RESULT_BACKEND= 'redis://localhost:6379'
+CELERY_BROKER_URL = 'redis://localhost:6379',
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 
 # Sound normal level
 LVL_NORMAL = 100
