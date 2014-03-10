@@ -64,6 +64,7 @@ def media_list() :
 	
 	log.debug('list songs')
 	try :
+		#TODO : list command
 		titles = subprocess.check_output('')
 		
 		log.info('Playlist titles : %s',titles)
