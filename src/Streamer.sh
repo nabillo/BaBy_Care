@@ -13,7 +13,7 @@ gst_command = "gst-launch-1.0 v4l2src  ! \"video/x-raw,width=640,height=480,fram
 				rtmpsink location=\"rtmp://example.com/myapp/mystream live=1\"" 
 
 case "$1" in
-	start)
+	Start)
 		echo -n "Starting Streamer: gst-launch"
 		# Run Gstreamer
 		$gst_command
@@ -23,7 +23,7 @@ case "$1" in
 		fi
 		echo -n "."
 		;;
-	stop)
+	Stop)
 		echo -n "Stoping Streamer: gst-launch"
 		# kill Gstreamer
 		killall gst-launch-1.0
@@ -33,7 +33,7 @@ case "$1" in
 		fi
 		echo -n "."
 		;;
-	restart)
+	Restart)
 		echo -n "Restarting Streamer: gst-launch"
 		killall -s SIGTERM gst-launch-1.0
 		if [ $? -ne 0 ] then
