@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 # add a file handler
 fh = logging.FileHandler("%s.log" % __name__)
-fh.setLevel(logging.DEBUG)
+fh.setLevel(logging.CRITICAL)
 # create a formatter and set the formatter for the handler.
 frmt = logging.Formatter('[%(asctime)s] - %(funcName)s - %(levelname)s - %(message)s')
 fh.setFormatter(frmt)
