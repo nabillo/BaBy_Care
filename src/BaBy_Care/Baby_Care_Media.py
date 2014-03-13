@@ -18,7 +18,7 @@ def allowed_file(filename) :
 def media_upload(files) :
 	"""Save file to SD card."""
 	
-	log.debug('upload file')
+	log.info('Upload file')
 	result = 0
 	for file in files:
 		# Check if the file is one of the allowed types/extensions
@@ -32,114 +32,128 @@ def media_upload(files) :
 				log.debug('file saved : %s',filename)
 				result = result + 1
 			except UploadNotAllowed:
-				log.debug('file too large : %s',filename)
+				log.error('file too large : %s',filename)
 		else:
-			log.debug('file not allowed : %s',filename)
+			log.warning('file not allowed : %s',filename)
 	
 	# Reload all song on playlist
 	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
+	
+	log.debug('result : %s',result)
 	return result
 	
 def media_del(files) :
 	"""Delete file from SD card and reload playlist."""
 	
-	log.debug('delete file')
+	log.info('Delete file')
 	result = 0
 	for file in files:
 		try :
 			#delete file from directory
 			subprocess.call('rm -f %s',file)
 			
-			log.info('file deleted : %s',file)
+			log.debug('file deleted : %s',file)
 			result = result + 1
 		except subprocess.CalledProcessError :
 			# file not deleted
-			log.warning('file not deleted')
+			log.error('file not deleted')
 			log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 	
 	# Reload all song on playlist
 	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
+	
+	log.debug('result : %s',result)
 	return result
 	
 def media_list() :
 	"""List song files."""
 	
-	log.debug('list songs')
+	log.info('List songs')
 	try :
 		#TODO : list command
 		titles = subprocess.check_output('')
 		
-		log.info('Playlist titles : %s',titles)
+		log.debug('Playlist titles : %s',titles)
 		titles = titles.splitlines()
 		result = titles
 	except subprocess.CalledProcessError :
 		# file not deleted
-		log.warning('file not deleted')
+		log.error('list error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
+	
+	log.debug('result : %s',result)
 	return result
 	
 def media_Play() :
 	"""Play playlist songs."""
 	
-	log.debug('Play songs')
+	log.info('Play songs')
 	try :
 		subprocess.call('mpc play ')
 	
-		log.info('Play')
+		log.debug('Play')
 		result = 'Success'
 	except subprocess.CalledProcessError :
 		# file not deleted
-		log.warning('Play error')
+		log.error('Play error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
+		
+	log.debug('result : %s',result)
 	return result
 	
 def media_Stop() :
 	"""Stop playlist songs."""
 	
-	log.debug('Stop songs')
+	log.info('Stop songs')
 	try :
 		subprocess.call('mpc stop ')
 	
-		log.info('stop')
+		log.debug('stop')
 		result = 'Success'
 	except subprocess.CalledProcessError :
 		# file not deleted
-		log.warning('stop error')
+		log.error('stop error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
+		
+	log.debug('result : %s',result)
 	return result
 	
 def media_VolUp() :
 	"""Volume Up."""
 	
-	log.debug('Volume Up')
+	log.info('Volume Up')
 	try :
 		subprocess.call('mpc volume + ')
 	
-		log.info('Volume increased')
+		log.debug('Volume increased')
 		result = 'Success'
 	except subprocess.CalledProcessError :
 		# file not deleted
-		log.warning('Volume increase error')
+		log.error('Volume increase error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
+		
+	log.debug('result : %s',result)
 	return result
 	
 def media_VolDown() :
 	"""Volume down."""
 	
-	log.debug('Volume Down')
+	log.info('Volume Down')
 	try :
 		subprocess.call('mpc volume - ')
 	
-		log.info('Volume decreased')
+		log.debug('Volume decreased')
 		result = 'Success'
 	except subprocess.CalledProcessError :
 		# file not deleted
-		log.warning('Volume decrease error')
+		log.error('Volume decrease error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
+		
+	log.debug('result : %s',result)
 	return result
 	
