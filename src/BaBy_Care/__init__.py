@@ -9,14 +9,13 @@ from flask.ext.zodb import ZODB
 from celery import Celery
 from celery.task.control import revoke
 from celery.result import AsyncResult
-
 import logging
 
 log = logging.getLogger(__name__)
-
+log.setLevel(logging.DEBUG)
 # add a file handler
 fh = logging.FileHandler("%s.log" % __name__)
-fh.setLevel(logging.CRITICAL)
+fh.setLevel(logging.DEBUG)
 # create a formatter and set the formatter for the handler.
 frmt = logging.Formatter('[%(asctime)s] - %(funcName)s - %(levelname)s - %(message)s')
 fh.setFormatter(frmt)
