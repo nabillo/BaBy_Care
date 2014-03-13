@@ -35,6 +35,12 @@ if not db.has_key('agi_normal') :
 	db['agi_normal'] = app.config['AGI_NORMAL']
 
 def sound_level() :
+	"""calculate sound level.
+	
+	@Imput    .
+	@Return   energy.
+	"""
+	
 	[length, data]=recorder.read()
 	# convert to an array of floats
 	floats = struct.unpack('f'*FRAMESIZE,data)
@@ -49,8 +55,13 @@ def sound_level() :
 	
 	return energy
 
-# Evaluate sound level 
 def activity_check() :
+	"""Evaluate sound and agitation level.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	energy = sound_level()
 	
 	if (energy < db['lvl_normal']) :
@@ -100,40 +111,69 @@ def activity_check() :
 		refresh_count1 = 0
 		refresh_count2 = 0
 		# Tigger alarm
-		
-# Retreive number of mvt per minute
+
 def agitation_count() :
+	"""Retreive number of mvt per minute and store it on db.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	global mvt_counter
 	log.info('agitation count : %d',mvt_counter)
 	db['mvt_count'] = mvt_counter
 	mvt_counter = 0
 
-def mvt_counter(channel) :  
+def mvt_counter(channel) :
+	"""incremente mvt conter on each call from GPIO triggering.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	global mvt_counter
 	mvt_counter = mvt_counter + 1
 
-# Detect agitation from GPIO
 def agitation_detect() :
+	"""Detect agitation from GPIO and call mvt_counter.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	GPIO.setmode(GPIO.BCM)
 	# GPIO 24 set up as an input, pulled down, connected to 3V3 on button press
-	GPIO.setup(GPIO_CHANNEL, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-	GPIO.add_event_detect(GPIO_CHANNEL, GPIO.RISING, callback=mvt_counter, bouncetime=300)  
+	GPIO.setup(app.config['GPIO_CHANNEL'], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+	GPIO.add_event_detect(app.config['GPIO_CHANNEL'], GPIO.RISING, callback=mvt_counter, bouncetime=300)  
 
-# Free resources
 def terminate() :
+	"""Free resources.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	global recorder
 	global detect
 	global buf
 	
 	signal.alarm(0)
-	recorder = Null
-	detect=null
-	buf=null
+	del recorder
+	del detect
+	del buf
 	GPIO.cleanup()
 	sys.exit(0)
-	
-# handle signal SIGTERM to stop controller gracefully
+
 def handler(signum, frame) :
+	"""handle signals.
+		SIGTERM to stop controller gracefully
+		SIGALRM handle activity controller alarm
+		SIGPROF handle agitation 
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	log.info('signal : %d',signum)
 	if (signum == signal.SIGTERM) :
 		terminate()
@@ -144,6 +184,12 @@ def handler(signum, frame) :
 
 @celery.task
 def activity_ctr_exe() :
+	"""Activity controller task.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	global recorder
 	global detect
 	global buf
@@ -172,12 +218,24 @@ def activity_ctr_exe() :
 
 @celery.task
 def agitation_ctr_exe() :
+	"""Agitation controller task.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	with app.app_context():
 		signal.setitimer(signal.ITIMER_PROF, 60, 60)
 		agitation_detect()
 
-# calibrate the normal level to actual sound level
 def normal_levels(agi_normal) :
+	"""Calibrate the normal level to actual sound level.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
 	db['agi_normal'] = agi_normal
 	db['lvl_normal'] = sound_level()
 	log.info("Normal level : {:10.4f}".format(db['lvl_normal']))
+
