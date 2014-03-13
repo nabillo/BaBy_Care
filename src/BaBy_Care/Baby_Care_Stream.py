@@ -4,7 +4,7 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-from subprocess import Popen, PIPE
+from subprocess import Popen
 	
 def steam_ctr_start() :
 	"""Start streamer.
@@ -13,12 +13,12 @@ def steam_ctr_start() :
 	@Return   result.
 	"""
 	
-	log.debug('Start streamer')
+	log.info('Start streamer')
 
 	result = 'Error'
 	gst = Popen(["Streamer.sh","Start"])
 	gst.poll()
-	log.info('return code : %s',gst.returncode)
+	log.debug('return code : %s',gst.returncode)
 	if (gst.returncode == 0) :
 		log.info('Gstreamer Started')
 		result = 'Success'
@@ -32,11 +32,11 @@ def steam_ctr_stop() :
 	@Return   result.
 	"""
 	
-	log.debug('Stop streamer')
+	log.info('Stop streamer')
 	result = 'Error'
 	gst = Popen(["Streamer.sh","Stop"])
 	gst.poll()
-	log.info('return code : %s',gst.returncode)
+	log.debug('return code : %s',gst.returncode)
 	if (gst.returncode == 0) :
 		log.info('Gstreamer Stoped')
 		result = 'Success'
@@ -49,11 +49,11 @@ def steam_ctr_restart() :
 	@Return   result.
 	"""
 	
-	log.debug('Restart Streamer')
+	log.info('Restart Streamer')
 	result = 'Error'
 	gst = Popen(["Streamer.sh","Restart"])
 	gst.poll()
-	log.info('return code : %s',gst.returncode)
+	log.debug('return code : %s',gst.returncode)
 	if (gst.returncode == 0) :
 		log.info('Gstreamer Restarted')
 		result = 'Success'
