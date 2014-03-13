@@ -11,20 +11,20 @@ from celery.task.control import revoke
 from celery.result import AsyncResult
 import logging
 
+# Initialize the Flask application
+app = Flask(__name__)
+app.config.from_object('BaBy_Care.config')
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(app.config['LOG_LEVEL'])
 # add a file handler
-fh = logging.FileHandler("%s.log" % __name__)
-fh.setLevel(logging.DEBUG)
+fh = logging.FileHandler(app.config['LOG_FILE'])
+fh.setLevel(app.config['LOG_LEVEL'])
 # create a formatter and set the formatter for the handler.
 frmt = logging.Formatter('[%(asctime)s] - %(funcName)s - %(levelname)s - %(message)s')
 fh.setFormatter(frmt)
 # add the Handler to the logger
 log.addHandler(fh)
-
-# Initialize the Flask application
-app = Flask(__name__)
-app.config.from_object('BaBy_Care.config')
 
 celery = Celery('baby_care')
 celery.conf.update(app.config)
