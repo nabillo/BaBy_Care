@@ -16,7 +16,7 @@ def stream_ctr() :
 	@Return   result.
 	"""
 	
-	log.debug('stream_ctr BEGIN')
+	log.info('stream_ctr BEGIN')
 	
 	# Get the JSON data sent from the form
 	data = request.get_json(force=True)
@@ -29,10 +29,11 @@ def stream_ctr() :
 	elif (data['command'] == 'Restart') :
 		result = steam_ctr_restart()
 	else :
-		log.info('invalid command')
+		log.warning('invalid command')
 		result = 'None'
 	
-	log.debug('stream_ctr END')
+	log.info(data['result'])
+	log.info('stream_ctr END')
 	return jsonify(result=result)
 
 @app.route('/activity_ctr.json', methods=['POST'])
@@ -40,15 +41,16 @@ def activity_ctr() :
 	"""Control activity.
 	
 	@Imput    command : [Start,Stop,Calibrate].
-						agi_normal (decimal).
+			agi_normal (decimal).
 	@Return   result.
 	"""
 	
-	log.debug('activity_ctr BEGIN')
+	log.info('activity_ctr BEGIN')
 	
 	# Get the JSON data sent from the form
 	data = request.get_json(force=True)
 	
+	log.info(data['command'])
 	if (data['command'] == 'Start') :
 		# Start the agitation controller
 		agi_job = agitation_ctr_exe.delay()
@@ -67,10 +69,11 @@ def activity_ctr() :
 		result = normal_levels(data['agi_normal'])
 		#TODO : adjust intervals
 	else :
-		log.info('invalid command')
+		log.warning('invalid command')
 		result = 'None'
 	
-	log.debug('activity_ctr END')
+	log.info(data['result'])
+	log.info('activity_ctr END')
 	return jsonify(result=result)
 	
 @app.route('/media_ctr.json', methods=['POST'])
@@ -82,11 +85,12 @@ def media_ctr() :
 	@Return   result.
 	"""
 	
-	log.debug('media_ctr BEGIN')
+	log.info('media_ctr BEGIN')
 	
 	# Get the JSON data sent from the form
 	data = request.get_json(force=True)
 	
+	log.info(data['command'])
 	if (data['command'] == 'Upload') :
 		result = media_upload(request.files.getlist("file[]"))
 	elif (data['command'] == 'Delete') :
@@ -102,10 +106,11 @@ def media_ctr() :
 	elif (data['command'] == 'VolDown') :
 		result = media_VolDown()
 	else :
-		log.info('invalid command')
+		log.warning('invalid command')
 		result = 'None'
-		
-	log.debug('media_ctr END')
+	
+	log.info(data['result'])
+	log.info('media_ctr END')
 	return jsonify(result=result)
 	
 	
