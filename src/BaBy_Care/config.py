@@ -10,7 +10,10 @@ SECRET_KEY = '?\xbf,\xb4\x8d\xa3"<\x9c\xb0@\x0f5\xab,w\xee\x8d$0\x13\x8b83'
 PORT = 12800
 
 # Set to False on production
-#DEBUG = True
+DEBUG = True
+# logging information
+LOG_LEVEL = logging.DEBUG
+LOG_FILE = BaBy_Care.log
 
 # Celery broker and backend url
 #TODO : normalyse ports
