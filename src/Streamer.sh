@@ -1,51 +1,50 @@
-#! /bin/sh
+#! /bin/bash -x
 
 ### BEGIN INIT INFO
 # Short-Description: Script to manage Streamer for BaBy Care
 # Description:       Script to manage Streamer for Baby Care by using the Gstreamer.
 ### END INIT INFO
 
-gst_command = "gst-launch-1.0 v4l2src  ! \"video/x-raw,width=640,height=480,framerate=15/1\" ! \
-				omxh264enc target-bitrate=1000000 control-rate=variable ! \
-				video/x-h264,profile=high ! h264parse ! queue ! \
-				flvmux name=mux alsasrc device=hw:1 ! audioresample ! audio/x-raw,rate=48000 ! \
-				queue ! voaacenc bitrate=32000 ! queue ! mux. mux. ! \
-				rtmpsink location=\"rtmp://example.com/myapp/mystream live=1\"" 
+gst_command="gst-launch-1.0 -v v4l2src ! 'video/x-raw, width=640, height=480, framerate=15/1' ! queue ! videoconvert ! omxh264enc ! rtph264pay pt=96 ! udpsink host=192.168.137.10 port=9078 " 
 
 case "$1" in
 	Start)
-		echo -n "Starting Streamer: gst-launch"
+		echo "Starting Streamer: gst-launch"
 		# Run Gstreamer
-		$gst_command
-		if [ $? -ne 0 ] then
-			echo -n "Error starting Streamer: gst-launch"
+		eval $gst_command
+		if [ $? -ne 0 ] 
+		then
+			echo "Error starting Streamer: gst-launch"
 			exit 1
 		fi
-		echo -n "."
+		echo "."
 		;;
 	Stop)
-		echo -n "Stoping Streamer: gst-launch"
+		echo "Stoping Streamer: gst-launch"
 		# kill Gstreamer
 		killall gst-launch-1.0
-		if [ $? -ne 0 ] then
-			echo -n "Error stoping Streamer: gst-launch"
+		if [ $? -ne 0 ] 
+		then
+			echo "Error stoping Streamer: gst-launch"
 			exit 2
 		fi
-		echo -n "."
+		echo "."
 		;;
 	Restart)
-		echo -n "Restarting Streamer: gst-launch"
+		echo "Restarting Streamer: gst-launch"
 		killall -s SIGTERM gst-launch-1.0
-		if [ $? -ne 0 ] then
-			echo -n "Error stoping Streamer: gst-launch"
+		if [ $? -ne 0 ] 
+		then
+			echo "Error stoping Streamer: gst-launch"
 			exit 2
 		fi
 		$gst_command
-		if [ $? -ne 0 ] then
-			echo -n "Error starting Streamer: gst-launch"
+		if [ $? -ne 0 ] 
+		then
+			echo "Error starting Streamer: gst-launch"
 			exit 1
 		fi
-		echo -n "."
+		echo "."
 		;;
 esac
 
