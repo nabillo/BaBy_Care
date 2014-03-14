@@ -32,7 +32,7 @@ def stream_ctr() :
 		log.warning('invalid command')
 		result = 'None'
 	
-	log.info(data['result'])
+	log.info(result)
 	log.info('stream_ctr END')
 	return jsonify(result=result)
 
@@ -72,7 +72,7 @@ def activity_ctr() :
 		log.warning('invalid command')
 		result = 'None'
 	
-	log.info(data['result'])
+	log.info(result)
 	log.info('activity_ctr END')
 	return jsonify(result=result)
 	
@@ -109,7 +109,7 @@ def media_ctr() :
 		log.warning('invalid command')
 		result = 'None'
 	
-	log.info(data['result'])
+	log.info(result)
 	log.info('media_ctr END')
 	return jsonify(result=result)
 	
