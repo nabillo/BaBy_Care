@@ -32,7 +32,7 @@ def stream_ctr() :
 		log.warning('invalid command')
 		result = 'None'
 	
-	log.info(result)
+	log.debug(result)
 	log.info('stream_ctr END')
 	return jsonify(result=result)
 
@@ -52,6 +52,7 @@ def activity_ctr() :
 	
 	log.info(data['command'])
 	if (data['command'] == 'Start') :
+		result = 'Error'
 		# Start the agitation controller
 		agi_job = agitation_ctr_exe.delay()
 		result = agi_job.AsyncResult(agi_job.id).state
@@ -59,11 +60,20 @@ def activity_ctr() :
 			# Start the activity controller
 			act_job = activity_ctr_exe.delay()
 			result = act_job.AsyncResult(act_job.id).state
+			if (result == states.SUCCESS) :
+				result = 'Success'
 	elif (data['command'] == 'Stop') :
+		result = 'Error'
 		# Stop the activity controller
 		revoke(act_job.id, terminate=True, signal='SIGTERM')
-		# Stop the agitation controller
-		revoke(agi_job.id, terminate=True, signal='SIGTERM')
+		result = act_job.AsyncResult(act_job.id).state
+		if (result == states.REVOKED) :
+			# Stop the agitation controller
+			revoke(agi_job.id, terminate=True, signal='SIGTERM')
+			result = agi_job.AsyncResult(agi_job.id).state
+			if (result == states.REVOKED) :
+				result = 'Success'
+			
 	elif (data['command'] == 'Calibrate') :
 		# Calibrate the normale sound level
 		result = normal_levels(data['agi_normal'])
@@ -72,7 +82,7 @@ def activity_ctr() :
 		log.warning('invalid command')
 		result = 'None'
 	
-	log.info(result)
+	log.debug(result)
 	log.info('activity_ctr END')
 	return jsonify(result=result)
 	
@@ -109,7 +119,7 @@ def media_ctr() :
 		log.warning('invalid command')
 		result = 'None'
 	
-	log.info(result)
+	log.debug(result)
 	log.info('media_ctr END')
 	return jsonify(result=result)
 	
