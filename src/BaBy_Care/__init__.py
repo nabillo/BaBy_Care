@@ -17,8 +17,8 @@ app.config.from_object('BaBy_Care.config')
 
 log = logging.getLogger(__name__)
 log.setLevel(app.config['LOG_LEVEL'])
-# add a file handler
-fh = logging.FileHandler(app.config['LOG_FILE'])
+# add a file rotation handler of 1Mb of size and 3 backups
+fh = logging.RotatingFileHandler(app.config['LOG_FILE'], maxBytes=1048576, backupCount=3)
 fh.setLevel(app.config['LOG_LEVEL'])
 # create a formatter and set the formatter for the handler.
 frmt = logging.Formatter('[%(asctime)s] - %(funcName)s - %(levelname)s - %(message)s')
