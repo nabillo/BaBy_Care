@@ -12,7 +12,8 @@ PORT = 12800
 # Set to False on production
 DEBUG = True
 # logging information
-LOG_LEVEL = 'logging.DEBUG'
+#CRITICAL	50,ERROR	40,WARNING	30,INFO	20,DEBUG	10,NOTSET	0
+LOG_LEVEL = 10
 LOG_FILE = 'BaBy_Care.log'
 
 # Celery broker and backend url

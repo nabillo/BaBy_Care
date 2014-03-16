@@ -4,7 +4,7 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-from subprocess import Popen
+from subprocess import check_call, CalledProcessError
 from BaBy_Care import log
 	
 def steam_ctr_start() :
@@ -16,13 +16,12 @@ def steam_ctr_start() :
 	
 	log.info('Start streamer')
 
-	result = 'Error'
-	gst = Popen(["Streamer.sh","Start"])
-	gst.poll()
-	log.debug('return code : %s',gst.returncode)
-	if (gst.returncode == 0) :
-		log.info('Gstreamer Started')
+	try :
+		check_call(["./Streamer.sh","Start"])
 		result = 'Success'
+	except CalledProcessError as e:
+		log.exception('gst launch error : %s',e.returncode)
+		result = 'Error'
 
 	return result
 	
@@ -34,13 +33,12 @@ def steam_ctr_stop() :
 	"""
 	
 	log.info('Stop streamer')
-	result = 'Error'
-	gst = Popen(["Streamer.sh","Stop"])
-	gst.poll()
-	log.debug('return code : %s',gst.returncode)
-	if (gst.returncode == 0) :
-		log.info('Gstreamer Stoped')
+	try :
+		check_call(["./Streamer.sh","Stop"])
 		result = 'Success'
+	except CalledProcessError as e:
+		log.exception('gst stop error : %s',e.returncode)
+		result = 'Error'
 
 	return result
 def steam_ctr_restart() :
@@ -52,11 +50,11 @@ def steam_ctr_restart() :
 	
 	log.info('Restart Streamer')
 	result = 'Error'
-	gst = Popen(["Streamer.sh","Restart"])
-	gst.poll()
-	log.debug('return code : %s',gst.returncode)
-	if (gst.returncode == 0) :
-		log.info('Gstreamer Restarted')
+	try :
+		check_call(["./Streamer.sh","Restart"])
 		result = 'Success'
-
+	except CalledProcessError as e:
+		log.exception('gst restart error : %s',e.returncode)
+		result = 'Error'
+		
 	return result

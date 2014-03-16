@@ -5,7 +5,7 @@
 # Description:       Script to manage Streamer for Baby Care by using the Gstreamer.
 ### END INIT INFO
 
-gst_command="gst-launch-1.0 -v v4l2src ! 'video/x-raw, width=640, height=480, framerate=15/1' ! queue ! videoconvert ! omxh264enc ! rtph264pay pt=96 ! udpsink host=192.168.137.10 port=9078 " 
+gst_command="gst-launch-1.0 -v v4l2src ! 'video/x-raw, width=640, height=480, framerate=15/1' ! queue ! videoconvert ! omxh264enc ! rtph264pay pt=96 ! udpsink host=192.168.137.10 port=9078 &" 
 
 case "$1" in
 	Start)
@@ -38,7 +38,7 @@ case "$1" in
 			echo "Error stoping Streamer: gst-launch"
 			exit 2
 		fi
-		$gst_command
+		eval $gst_command
 		if [ $? -ne 0 ] 
 		then
 			echo "Error starting Streamer: gst-launch"
