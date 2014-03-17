@@ -13,7 +13,7 @@ def stream_ctr() :
 	"""Control streamer.
 	
 	@Imput    command : [Start,Stop,Restart].
-	@Return   result.
+	@Return   result : [Success,Error,None].
 	"""
 	
 	log.info('stream_ctr BEGIN')
@@ -42,7 +42,7 @@ def activity_ctr() :
 	
 	@Imput    command : [Start,Stop,Calibrate].
 			agi_normal (decimal).
-	@Return   result.
+	@Return   result : [In progress,Success,Stoped,Error,None].
 	"""
 	
 	log.info('activity_ctr BEGIN')
@@ -100,7 +100,7 @@ def media_ctr() :
 	
 	@Imput    command : [Upload,Delete,List,Play,Stop,VolUp,VolDown].
 	          titles.
-	@Return   result.
+	@Return   result : [%d,list,Success,Error].
 	"""
 	
 	log.info('media_ctr BEGIN')
