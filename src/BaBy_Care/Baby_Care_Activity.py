@@ -23,15 +23,6 @@ FRAMESIZE   = 1024
 PITCHALG    = aubio_pitch_yin
 PITCHOUT    = aubio_pitchm_freq
 
-if not db.has_key('lvl_normal') :
-	db['lvl_normal'] = app.config['LVL_NORMAL']
-if not db.has_key('normal_interval') :
-	db['normal_interval'] = app.config['NORMAL_INTERVAL']
-if not db.has_key('active_interval') :
-	db['active_interval'] = app.config['ACTIVE_INTERVAL']
-if not db.has_key('agi_normal') :
-	db['agi_normal'] = app.config['AGI_NORMAL']
-
 def sound_level() :
 	"""calculate sound level.
 	
