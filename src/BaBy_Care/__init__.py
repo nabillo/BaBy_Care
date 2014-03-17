@@ -31,7 +31,8 @@ celery.conf.update(app.config)
 
 db = ZODB(app)
 
-'''with app.test_request_context() :
+@app.before_first_request
+def before_first_request():
     if not db.has_key('lvl_normal') :
         db['lvl_normal'] = app.config['LVL_NORMAL']
     if not db.has_key('normal_interval') :
@@ -40,6 +41,6 @@ db = ZODB(app)
         db['active_interval'] = app.config['ACTIVE_INTERVAL']
     if not db.has_key('agi_normal') :
         db['agi_normal'] = app.config['AGI_NORMAL']
-'''
+
 import Baby_Care_WS
 
