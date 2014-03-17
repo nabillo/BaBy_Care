@@ -53,26 +53,34 @@ def activity_ctr() :
 	log.info(data['command'])
 	if (data['command'] == 'Start') :
 		result = 'Error'
-		# Start the agitation controller
-		agi_job = agitation_ctr_exe.delay()
-		result = agi_job.AsyncResult(agi_job.id).state
-		if (result == states.SUCCESS) :
-			# Start the activity controller
-			act_job = activity_ctr_exe.delay()
-			result = act_job.AsyncResult(act_job.id).state
+		if ((db.has_key('act_job_id')) and (db[act_job_id] != '')) :
+			result = 'In progress'
+		else :
+			# Start the agitation controller
+			agi_job = agitation_ctr_exe.delay()
+			result = agi_job.AsyncResult(agi_job.id).state
 			if (result == states.SUCCESS) :
-				result = 'Success'
+				# Start the activity controller
+				act_job = activity_ctr_exe.delay()
+				result = act_job.AsyncResult(act_job.id).state
+				if (result == states.SUCCESS) :
+					result = 'Success'
+					db[act_job_id] = act_job.AsyncResult(act_job.id).id
 	elif (data['command'] == 'Stop') :
 		result = 'Error'
-		# Stop the activity controller
-		revoke(act_job.id, terminate=True, signal='SIGTERM')
-		result = act_job.AsyncResult(act_job.id).state
-		if (result == states.REVOKED) :
-			# Stop the agitation controller
-			revoke(agi_job.id, terminate=True, signal='SIGTERM')
-			result = agi_job.AsyncResult(agi_job.id).state
+		if ((not db.has_key('act_job_id')) or (db[act_job_id] == '')) :
+			result = 'Stoped'
+		else :
+			# Stop the activity controller
+			revoke(act_job.id, terminate=True, signal='SIGTERM')
+			result = act_job.AsyncResult(act_job.id).state
 			if (result == states.REVOKED) :
-				result = 'Success'
+				# Stop the agitation controller
+				revoke(agi_job.id, terminate=True, signal='SIGTERM')
+				result = agi_job.AsyncResult(agi_job.id).state
+				if (result == states.REVOKED) :
+					result = 'Success'
+					db[act_job_id] = ''
 			
 	elif (data['command'] == 'Calibrate') :
 		# Calibrate the normale sound level
