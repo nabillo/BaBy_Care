@@ -157,7 +157,7 @@ def terminate() :
 
 	signal.alarm(0)
 	GPIO.cleanup()
-	sys.exit(0)
+	exit(0)
 
 def handler(signum, frame) :
 	"""Signals handler.
