@@ -6,7 +6,7 @@ Created on Feb 19, 2014
 
 import alsaaudio, struct
 from aubio.task import *
-
+from flask import g
 from BaBy_Care import app, celery, log, db
 
 import signal
@@ -22,9 +22,6 @@ RATE        = 44100
 FRAMESIZE   = 1024
 PITCHALG    = aubio_pitch_yin
 PITCHOUT    = aubio_pitchm_freq
-
-global refresh_count1
-global refresh_count2
 
 if not db.has_key('lvl_normal') :
 	db['lvl_normal'] = app.config['LVL_NORMAL']
@@ -43,16 +40,16 @@ def sound_level() :
 	"""
 	
 	log.info('calculate sound level')
-	[length, data]=recorder.read()
+	[length, data]=g.recorder.read()
 	# convert to an array of floats
 	floats = struct.unpack('f'*FRAMESIZE,data)
 	# copy floats into structure
 	for i in range(len(floats)):
-		fvec_write_sample(buf, floats[i], 0, i)
+		fvec_write_sample(g.buf, floats[i], 0, i)
 	# find pitch of audio frame
-	freq = aubio_pitchdetection(detect,buf)
+	freq = aubio_pitchdetection(g.detect,g.buf)
 	# find energy of audio frame
-	energy = vec_local_energy(buf)
+	energy = vec_local_energy(g.buf)
 	log.info("freq : {:10.4f} energy : {:10.4f}".format(freq,energy))
 	
 	return energy
@@ -71,55 +68,55 @@ def activity_check() :
 		# Quiet state
 		log.debug('Quiet state')
 		# We reset timer counter for agitation
-		refresh_count1 = 0
-		refresh_count2 = 0
+		g.refresh_count1 = 0
+		g.refresh_count2 = 0
 		
 	elif ((energy >= db['lvl_normal']) and (energy < db['lvl_normal'] + db['normal_interval'])) :
 		# Normal state
 		log.debug('Normal state')
-		refresh_count2 = 0
+		g.refresh_count2 = 0
 		# If agitation stay higher than normal for a configurable periode 
-		if (db['mvt_count'] > db['agi_normal']) and (refresh_count1 > app.config['REFRESH_COUNT']) :
-			log.debug('if-refresh_count1 : %s',refresh_count1)
+		if (db['mvt_count'] > db['agi_normal']) and (g.refresh_count1 > app.config['REFRESH_COUNT']) :
+			log.debug('if-refresh_count1 : %s',g.refresh_count1)
 			# We reduce the normal level
 			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE']/100)
 			log.debug('new lvl_normal : %s',db['lvl_normal'])
-			refresh_count1 = 0
+			g.refresh_count1 = 0
 			
 		# If agitation is higher we increment timer counter
 		elif (db['mvt_count'] > db['agi_normal']) :
-			refresh_count1 = refresh_count1 + 1
-			log.debug('elif-refresh_count1 : %s',refresh_count1)
+			g.refresh_count1 = g.refresh_count1 + 1
+			log.debug('elif-refresh_count1 : %s',g.refresh_count1)
 			
 		# If agitation return to normal we reset timer counter
 		else :
-			refresh_count1 = 0
-			log.debug('else-refresh_count1 : %s',refresh_count1)
+			g.refresh_count1 = 0
+			log.debug('else-refresh_count1 : %s',g.refresh_count1)
 		
 	elif ((energy >= db['lvl_normal'] + db['normal_interval']) and (energy < db['lvl_normal'] + db['normal_interval'] + db['active_interval'])) :
 		# Active state
 		log.debug('Active state')
 		# We reset timer counter for agitation
-		refresh_count1 = 0
+		g.refresh_count1 = 0
 		# If active period is higher than a configurable periode 
-		if (refresh_count2 > app.config['REFRESH_COUNT']) :
-			log.debug('if-refresh_count2 : %s',refresh_count2)
+		if (g.refresh_count2 > app.config['REFRESH_COUNT']) :
+			log.debug('if-refresh_count2 : %s',g.refresh_count2)
 			#TODO : If agitation is higher we send silent notification
 			# if (db['mvt_count'] > db['agi_normal']) :
 			# We increase the normal level
 			db['lvl_normal'] = db['lvl_normal'] * (1+(app.config['INCREASE_RATE']/100))
 			log.debug('new lvl_normal : %s',db['lvl_normal'])
-			refresh_count2 = 0
+			g.refresh_count2 = 0
 		else :
-			refresh_count2 = refresh_count2 + 1
-			log.debug('else-refresh_count2 : %s',refresh_count2)
+			g.refresh_count2 = g.refresh_count2 + 1
+			log.debug('else-refresh_count2 : %s',g.refresh_count2)
 		
 	elif (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
 		# Criying state
 		log.debug('Criying state')
 		# We reset timer counter for agitation
-		refresh_count1 = 0
-		refresh_count2 = 0
+		g.refresh_count1 = 0
+		g.refresh_count2 = 0
 		#TODO : Tigger alarm
 
 def agitation_count() :
@@ -130,10 +127,9 @@ def agitation_count() :
 	"""
 	
 	log.info('Retreive number of mvt per minute')
-	global mvt_counter
-	log.debug('mvt_counter : %d',mvt_counter)
-	db['mvt_count'] = mvt_counter
-	mvt_counter = 0
+	log.debug('mvt_counter : %d',g.mvt_counter)
+	db['mvt_count'] = g.mvt_counter
+	g.mvt_counter = 0
 
 def mvt_counter(channel) :
 	"""Incremente mvt conter on each call from GPIO triggering.
@@ -143,9 +139,8 @@ def mvt_counter(channel) :
 	"""
 	
 	log.info('Incremente mvt conter')
-	global mvt_counter
-	mvt_counter = mvt_counter + 1
-	log.debug('mvt_counter : %d',mvt_counter)
+	g.mvt_counter = g.mvt_counter + 1
+	log.debug('mvt_counter : %d',g.mvt_counter)
 
 def agitation_detect() :
 	"""Detect agitation from GPIO and call mvt_counter.
@@ -168,14 +163,8 @@ def terminate() :
 	"""
 	
 	log.info('Free resources')
-	global recorder
-	global detect
-	global buf
-	
+
 	signal.alarm(0)
-	del recorder
-	del detect
-	del buf
 	GPIO.cleanup()
 	sys.exit(0)
 
@@ -206,13 +195,9 @@ def activity_ctr_exe() :
 	@Return   .
 	"""
 	
-	global recorder
-	global detect
-	global buf
-	
 	log.info('Activity controller task')
-	refresh_count1 = 0
-	refresh_count2 = 0
+	g.refresh_count1 = 0
+	g.refresh_count2 = 0
 	
 	# Set the signal handler
 	signal.signal(signal.SIGTERM, handler)
@@ -220,15 +205,15 @@ def activity_ctr_exe() :
 	
 	# set up audio input
 	card = CARD
-	recorder = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NONBLOCK, card)
-	recorder.setchannels(CHANNELS)
-	recorder.setrate(RATE)
-	recorder.setformat(INFORMAT)
-	recorder.setperiodsize(FRAMESIZE)
+	g.recorder = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NONBLOCK, card)
+	g.recorder.setchannels(CHANNELS)
+	g.recorder.setrate(RATE)
+	g.recorder.setformat(INFORMAT)
+	g.recorder.setperiodsize(FRAMESIZE)
 	
 	# set up pitch detect
-	detect = new_aubio_pitchdetection(FRAMESIZE,FRAMESIZE/2,CHANNELS,RATE,PITCHALG,PITCHOUT)
-	buf = new_fvec(FRAMESIZE,CHANNELS)
+	g.detect = new_aubio_pitchdetection(FRAMESIZE,FRAMESIZE/2,CHANNELS,RATE,PITCHALG,PITCHOUT)
+	g.buf = new_fvec(FRAMESIZE,CHANNELS)
 	
 	# setup periodic alarm to evaluate sound level and set agitation level
 	signal.alarm(app.config['REFRESH_RATE'])
