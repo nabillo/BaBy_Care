@@ -4,8 +4,7 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-import alsaaudio, struct
-from aubio.task import *
+import alsaaudio, audioop
 from flask import g
 from BaBy_Care import app, celery, log, db
 
@@ -15,13 +14,11 @@ import RPi.GPIO as GPIO
 
 # constants
 
-CARD        = 'sysdefault:CARD=Microphone'
+CARD        = 'sysdefault:CARD=CameraB409241'
 CHANNELS    = 1
 INFORMAT    = alsaaudio.PCM_FORMAT_FLOAT_LE
-RATE        = 44100
+RATE        = 16000
 FRAMESIZE   = 1024
-PITCHALG    = aubio_pitch_yin
-PITCHOUT    = aubio_pitchm_freq
 
 def sound_level() :
 	"""calculate sound level.
@@ -31,19 +28,21 @@ def sound_level() :
 	"""
 	
 	log.info('calculate sound level')
-	[length, data]=g.recorder.read()
-	# convert to an array of floats
-	floats = struct.unpack('f'*FRAMESIZE,data)
-	# copy floats into structure
-	for i in range(len(floats)):
-		fvec_write_sample(g.buf, floats[i], 0, i)
-	# find pitch of audio frame
-	freq = aubio_pitchdetection(g.detect,g.buf)
-	# find energy of audio frame
-	energy = vec_local_energy(g.buf)
-	log.info("freq : {:10.4f} energy : {:10.4f}".format(freq,energy))
+# 	# set up audio input
+	card = CARD
+	recorder = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NORMAL, card)
+	recorder.setchannels(CHANNELS)
+	recorder.setrate(RATE)
+	recorder.setformat(INFORMAT)
+	recorder.setperiodsize(FRAMESIZE)
 	
-	return energy
+	[length, data]=recorder.read()
+	log.debug('length : %f',length)
+	volume = audioop.max(data, 2)
+	log.debug("volume : %f",volume)
+	volume = audioop.rms(data, 2)
+	log.debug("volume : %f",volume)
+	return volume
 
 def activity_check() :
 	"""Evaluate sound and agitation level.
@@ -194,18 +193,6 @@ def activity_ctr_exe() :
 	signal.signal(signal.SIGTERM, handler)
 	signal.signal(signal.SIGALRM, handler)
 	
-	# set up audio input
-	card = CARD
-	g.recorder = alsaaudio.PCM(alsaaudio.PCM_CAPTURE,alsaaudio.PCM_NONBLOCK, card)
-	g.recorder.setchannels(CHANNELS)
-	g.recorder.setrate(RATE)
-	g.recorder.setformat(INFORMAT)
-	g.recorder.setperiodsize(FRAMESIZE)
-	
-	# set up pitch detect
-	g.detect = new_aubio_pitchdetection(FRAMESIZE,FRAMESIZE/2,CHANNELS,RATE,PITCHALG,PITCHOUT)
-	g.buf = new_fvec(FRAMESIZE,CHANNELS)
-	
 	# setup periodic alarm to evaluate sound level and set agitation level
 	signal.alarm(app.config['REFRESH_RATE'])
 
@@ -236,7 +223,8 @@ def normal_levels(agi_normal) :
 		log.debug('agi_normal : %s',agi_normal)
 		log.debug("lvl_normal : {:10.4f}".format(db['lvl_normal']))
 		result = 'Success'
-	except as e:
-		log.exception('Calibration error : %s',e.strerror)
+	except:
+		log.exception('Calibration error ')
 		result = 'Error'
+	return result 
 		

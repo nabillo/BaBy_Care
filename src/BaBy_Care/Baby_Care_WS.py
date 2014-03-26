@@ -4,7 +4,7 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-from BaBy_Care import app, log,Celery
+from BaBy_Care import app, log,db, Celery
 from Baby_Care_Stream import steam_ctr_start, steam_ctr_stop, steam_ctr_restart
 from Baby_Care_Activity import agitation_ctr_exe, activity_ctr_exe, normal_levels
 from flask import request, jsonify
@@ -54,7 +54,7 @@ def activity_ctr() :
 	log.info(data['command'])
 	if (data['command'] == 'Start') :
 		result = 'Error'
-		if ((db.has_key('act_job_id')) and (db[act_job_id] != '')) :
+		if ((db.has_key('act_job_id')) and (db['act_job_id'] != '')) :
 			result = 'In progress'
 		else :
 			# Start the agitation controller
@@ -66,10 +66,10 @@ def activity_ctr() :
 				result = act_job.AsyncResult(act_job.id).state
 				if (result == states.SUCCESS) :
 					result = 'Success'
-					db[act_job_id] = act_job.AsyncResult(act_job.id).id
+					db['act_job_id'] = act_job.AsyncResult(act_job.id).id
 	elif (data['command'] == 'Stop') :
 		result = 'Error'
-		if ((not db.has_key('act_job_id')) or (db[act_job_id] == '')) :
+		if ((not db.has_key('act_job_id')) or (db['act_job_id'] == '')) :
 			result = 'Stoped'
 		else :
 			# Stop the activity controller
@@ -81,7 +81,7 @@ def activity_ctr() :
 				result = agi_job.AsyncResult(agi_job.id).state
 				if (result == states.REVOKED) :
 					result = 'Success'
-					db[act_job_id] = ''
+					db['act_job_id'] = ''
 			
 	elif (data['command'] == 'Calibrate') :
 		# Calibrate the normale sound level
