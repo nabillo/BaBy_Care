@@ -29,9 +29,10 @@ def activity_ctr() :
 		result = activity_ctr_stop()
 	elif (data['command'] == 'Event') :
 		if (data['state'] == 'Begin') :
-			
+			activity_event_beg()
 		elif (data['state'] == 'End') :
-			
+			activity_event_end()
+		result = ""
 	elif (data['command'] == 'Calibrate') :
 		# Calibrate the normale sound level
 		result = normal_levels(data['agi_normal'])
