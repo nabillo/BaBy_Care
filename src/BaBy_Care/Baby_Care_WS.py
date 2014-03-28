@@ -5,7 +5,7 @@ Created on Feb 19, 2014
 '''
 
 from BaBy_Care import app, log,db, Celery
-from Baby_Care_Activity import agitation_ctr_exe, activity_ctr_exe, normal_levels
+from Baby_Care_Activity import activity_ctr_start, activity_ctr_stop, activity_event_begin, activity_event_end, normal_levels
 from flask import request, jsonify
 
 @app.route('/activity_ctr.json', methods=['POST'])
