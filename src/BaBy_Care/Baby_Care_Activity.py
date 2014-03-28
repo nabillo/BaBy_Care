@@ -45,6 +45,7 @@ def sound_level() :
 	log.debug("volume : %f",volume)
 	return volume
 
+@celery.task
 def activity_check() :
 	"""Evaluate sound and agitation level.
 	
@@ -153,7 +154,6 @@ def activity_ctr_stop()() :
 		log.exception('Motion resume error : %s',e.returncode)
 		result = 'Error'
 
-@celery.task
 def activity_event_begin() :
 	"""A Baby event has started.
 	
@@ -166,7 +166,6 @@ def activity_event_begin() :
 	# setup alarm to evaluate agitation level
 	signal.alarm(app.config['AGI_NORMAL'])
 
-@celery.task
 def activity_event_end() :
 	"""A Baby event has ended.
 	
