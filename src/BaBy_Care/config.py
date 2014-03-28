@@ -30,8 +30,11 @@ ACTIVE_INTERVAL = 20
 # Normal agitation frequency per minute
 AGI_NORMAL = 10
 
-# Period for acquisition of sound level
-REFRESH_RATE = 10
+# Number of inadequate Motion agitation detection and sound activity detection before decrising norma level
+STATE_ERROR = 5
+
+# Normal level decrising rate in %
+REDUCTION_RATE = 10
 
 # Persistancy storage location
 ZODB_STORAGE = 'file://BaByCare.fs'
