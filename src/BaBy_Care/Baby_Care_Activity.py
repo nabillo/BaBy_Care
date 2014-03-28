@@ -188,13 +188,11 @@ def normal_levels(agi_normal) :
 	
 	log.info('Calibration')
 	try :
-		db['agi_normal'] = agi_normal
 		db['lvl_normal'] = sound_level()
-		log.debug('agi_normal : %s',agi_normal)
-		log.debug("lvl_normal : {:10.4f}".format(db['lvl_normal']))
+		log.debug("lvl_normal : %f",db['lvl_normal'])
 		result = 'Success'
 	except:
-		log.exception('Calibration error ')
+		log.exception('Calibration error')
 		result = 'Error'
 	return result 
 		
