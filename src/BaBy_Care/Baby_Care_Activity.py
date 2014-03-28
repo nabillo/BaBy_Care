@@ -5,7 +5,6 @@ Created on Feb 19, 2014
 '''
 
 import alsaaudio, audioop
-from flask import g
 from BaBy_Care import app, celery, log, db
 
 import signal
@@ -19,6 +18,8 @@ CHANNELS    = 1
 INFORMAT    = alsaaudio.PCM_FORMAT_FLOAT_LE
 RATE        = 16000
 FRAMESIZE   = 1024
+
+global state_err
 
 def sound_level() :
 	"""calculate sound level.
@@ -52,98 +53,37 @@ def activity_check() :
 	"""
 	
 	log.info('Evaluate sound and agitation level')
+	
+	global state_err
 	energy = sound_level()
 	
 	if (energy < db['lvl_normal']) :
 		# Quiet state
-		log.debug('Quiet state')
-		# We reset timer counter for agitation
-		g.refresh_count1 = 0
-		g.refresh_count2 = 0
+		log.debug('Quiet state on agitation !!!')
+		state_err1 = state_err1 + 1
+		# We reduce the normal level if that has has been reproduced many times
+		if (state_err1 > app.config['STATE_ERROR']) :
+			db['lvl_normal'] = db['lvl_normal'] * ((2 * app.config['REDUCTION_RATE'])/100)
+			state_err1 = 0
 		
 	elif ((energy >= db['lvl_normal']) and (energy < db['lvl_normal'] + db['normal_interval'])) :
 		# Normal state
-		log.debug('Normal state')
-		g.refresh_count2 = 0
-		# If agitation stay higher than normal for a configurable periode 
-		if (db['mvt_count'] > db['agi_normal']) and (g.refresh_count1 > app.config['REFRESH_COUNT']) :
-			log.debug('if-refresh_count1 : %s',g.refresh_count1)
-			# We reduce the normal level
-			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE']/100)
-			log.debug('new lvl_normal : %s',db['lvl_normal'])
-			g.refresh_count1 = 0
+		log.debug('Normal state with agitation')
+		state_err2 = state_err2 + 1
+		# We reduce the normal level if that has has been reproduced many times
+		if (state_err2 > app.config['STATE_ERROR']) :
+			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE'])/100)
+			state_err2 = 0
 			
-		# If agitation is higher we increment timer counter
-		elif (db['mvt_count'] > db['agi_normal']) :
-			g.refresh_count1 = g.refresh_count1 + 1
-			log.debug('elif-refresh_count1 : %s',g.refresh_count1)
-			
-		# If agitation return to normal we reset timer counter
-		else :
-			g.refresh_count1 = 0
-			log.debug('else-refresh_count1 : %s',g.refresh_count1)
-		
 	elif ((energy >= db['lvl_normal'] + db['normal_interval']) and (energy < db['lvl_normal'] + db['normal_interval'] + db['active_interval'])) :
 		# Active state
-		log.debug('Active state')
-		# We reset timer counter for agitation
-		g.refresh_count1 = 0
-		# If active period is higher than a configurable periode 
-		if (g.refresh_count2 > app.config['REFRESH_COUNT']) :
-			log.debug('if-refresh_count2 : %s',g.refresh_count2)
-			#TODO : If agitation is higher we send silent notification
-			# if (db['mvt_count'] > db['agi_normal']) :
-			# We increase the normal level
-			db['lvl_normal'] = db['lvl_normal'] * (1+(app.config['INCREASE_RATE']/100))
-			log.debug('new lvl_normal : %s',db['lvl_normal'])
-			g.refresh_count2 = 0
-		else :
-			g.refresh_count2 = g.refresh_count2 + 1
-			log.debug('else-refresh_count2 : %s',g.refresh_count2)
+		log.debug('Active state with agitation')
+		#TODO : Tigger alarm
 		
 	elif (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
 		# Criying state
-		log.debug('Criying state')
-		# We reset timer counter for agitation
-		g.refresh_count1 = 0
-		g.refresh_count2 = 0
+		log.debug('Criying state with agitation !!!')
 		#TODO : Tigger alarm
-
-def agitation_count() :
-	"""Retreive number of mvt per minute and store it on db.
-	
-	@Imput    .
-	@Return   .
-	"""
-	
-	log.info('Retreive number of mvt per minute')
-	log.debug('mvt_counter : %d',g.mvt_counter)
-	db['mvt_count'] = g.mvt_counter
-	g.mvt_counter = 0
-
-def mvt_counter(channel) :
-	"""Incremente mvt conter on each call from GPIO triggering.
-	
-	@Imput    .
-	@Return   .
-	"""
-	
-	log.info('Incremente mvt conter')
-	g.mvt_counter = g.mvt_counter + 1
-	log.debug('mvt_counter : %d',g.mvt_counter)
-
-def agitation_detect() :
-	"""Detect agitation from GPIO and call mvt_counter.
-	
-	@Imput    .
-	@Return   .
-	"""
-	
-	log.info('Set GPIO')
-	GPIO.setmode(GPIO.BCM)
-	# GPIO 24 set up as an input, pulled down, connected to 3V3 on button press
-	GPIO.setup(app.config['GPIO_CHANNEL'], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-	GPIO.add_event_detect(app.config['GPIO_CHANNEL'], GPIO.RISING, callback=mvt_counter, bouncetime=300)  
 
 def terminate() :
 	"""Free resources.
@@ -174,40 +114,70 @@ def handler(signum, frame) :
 		terminate()
 	elif (signum == signal.SIGALRM) :
 		activity_check()
-	elif (signum == signal.SIGPROF) :
-		agitation_count()
 
-@celery.task
-def activity_ctr_exe() :
-	"""Activity controller task.
+def activity_ctr_start()() :
+	"""Start Motion for activity control.
 	
 	@Imput    .
 	@Return   .
 	"""
 	
-	log.info('Activity controller task')
-	g.refresh_count1 = 0
-	g.refresh_count2 = 0
+	log.info('Start Motion')
 	
-	# Set the signal handler
-	signal.signal(signal.SIGTERM, handler)
-	signal.signal(signal.SIGALRM, handler)
+	if (signal.getsignal(signal.SIGALRM) == None) :
+		# Set the signal handler
+		signal.signal(signal.SIGALRM, handler)
 	
-	# setup periodic alarm to evaluate sound level and set agitation level
-	signal.alarm(app.config['REFRESH_RATE'])
-
-@celery.task
-def agitation_ctr_exe() :
-	"""Agitation controller task.
+	# Send resume command to Motion
+	try :
+		check_call(["motion-control","detection","resume",0])
+		result = 'Success'
+	except CalledProcessError as e:
+		log.exception('Motion resume error : %s',e.returncode)
+		result = 'Error'
+	
+def activity_ctr_stop()() :
+	"""Stop Motion and activity control.
 	
 	@Imput    .
 	@Return   .
 	"""
 	
-	log.info('Agitation controller task')
-	with app.app_context():
-		signal.setitimer(signal.ITIMER_PROF, 60, 60)
-		agitation_detect()
+	log.info('Stop Motion')
+	
+	# Send resume command to Motion
+	try :
+		check_call(["motion-control","detection","pause",0])
+		result = 'Success'
+	except CalledProcessError as e:
+		log.exception('Motion resume error : %s',e.returncode)
+		result = 'Error'
+
+@celery.task
+def activity_event_begin() :
+	"""A Baby event has started.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
+	log.info('Baby Event started')
+	
+	# setup alarm to evaluate agitation level
+	signal.alarm(app.config['AGI_NORMAL'])
+
+@celery.task
+def activity_event_end() :
+	"""A Baby event has ended.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
+	log.info('Baby Event ended')
+	
+	# cancel alarm
+	signal.alarm(0)
 
 def normal_levels(agi_normal) :
 	"""Calibrate the normal level to actual sound level.
