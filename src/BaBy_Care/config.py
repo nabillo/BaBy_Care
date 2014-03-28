@@ -27,7 +27,7 @@ LVL_NORMAL = 100
 NORMAL_INTERVAL = 10
 # Interval lenght of active sound level active to agitation
 ACTIVE_INTERVAL = 20
-# Normal agitation frequency per minute
+# Normal agitation time in second. This is the max period of agitation before launching an alarm 
 AGI_NORMAL = 10
 
 # Number of inadequate Motion agitation detection and sound activity detection before decrising norma level
