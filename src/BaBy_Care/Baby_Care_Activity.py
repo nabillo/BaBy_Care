@@ -115,6 +115,9 @@ def handler(signum, frame) :
 		terminate()
 	elif (signum == signal.SIGALRM) :
 		activity_check()
+		act_job = activity_check.delay()
+		result = act_job.AsyncResult(act_job.id).state
+		log.debug('activity check result : %s',result)
 
 def activity_ctr_start()() :
 	"""Start Motion for activity control.
