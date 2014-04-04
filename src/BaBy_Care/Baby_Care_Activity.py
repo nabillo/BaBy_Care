@@ -97,8 +97,7 @@ def crying_check() :
 	
 	log.info('Check baby crying')
 	
-	global refresh_rate
-	energy = sound_level(0.3 * refresh_rate)
+	energy = sound_level(0.3 * db['cry_normal'])
 	
 	if (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
 		# Criying state
@@ -151,7 +150,6 @@ def activity_ctr_start()() :
 	
 	log.info('Start Motion')
 	
-	global refresh_rate
 	if (signal.getsignal(signal.SIGALRM) == None) :
 		# Set the signal handler
 		signal.signal(signal.SIGALRM, handler)
@@ -167,8 +165,7 @@ def activity_ctr_start()() :
 		result = 'Error'
 		
 	# launch timer for crying check
-	refresh_rate = app.config['REFRESH_RATE']
-	signal.setitimer(signal.ITIMER_PROF, refresh_rate, refresh_rate)
+	signal.setitimer(signal.ITIMER_PROF, db['cry_normal'], db['cry_normal'])
 	
 def activity_ctr_stop()() :
 	"""Stop Motion and activity control.
@@ -200,7 +197,7 @@ def activity_event_begin() :
 	log.info('Baby Event started')
 	
 	# setup alarm to evaluate agitation level
-	signal.alarm(app.config['AGI_NORMAL'])
+	signal.alarm(db['agi_normal'] )
 
 def activity_event_end() :
 	"""A Baby event has ended.
@@ -214,7 +211,7 @@ def activity_event_end() :
 	# cancel alarm
 	signal.alarm(0)
 
-def normal_levels() :
+def normal_levels(agi_normal, cry_normal) :
 	"""Calibrate the normal level to actual sound level.
 	
 	@Imput    .
@@ -224,7 +221,9 @@ def normal_levels() :
 	log.info('Calibration')
 	try :
 		db['lvl_normal'] = sound_level()
-		log.debug("lvl_normal : %f",db['lvl_normal'])
+		db['agi_normal'] = agi_normal
+		db['cry_normal'] = cry_normal
+		log.debug("lvl_normal : %f, agi_normal %d, cry_normal %d",db['lvl_normal'],db['agi_normal'],db['cry_normal'])
 		result = 'Success'
 	except:
 		log.exception('Calibration error')
