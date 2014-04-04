@@ -20,8 +20,9 @@ RATE        = 16000
 FRAMESIZE   = 1024
 
 global state_err
+global refresh_rate
 
-def sound_level() :
+def sound_level(framesize) :
 	"""calculate sound level.
 	
 	@Imput    .
@@ -35,7 +36,7 @@ def sound_level() :
 	recorder.setchannels(CHANNELS)
 	recorder.setrate(RATE)
 	recorder.setformat(INFORMAT)
-	recorder.setperiodsize(FRAMESIZE)
+	recorder.setperiodsize(framesize)
 	
 	[length, data]=recorder.read()
 	log.debug('length : %f',length)
@@ -56,7 +57,7 @@ def activity_check() :
 	log.info('Evaluate sound and agitation level')
 	
 	global state_err
-	energy = sound_level()
+	energy = sound_level(FRAMESIZE)
 	
 	if (energy < db['lvl_normal']) :
 		# Quiet state
@@ -86,6 +87,24 @@ def activity_check() :
 		log.debug('Criying state with agitation !!!')
 		#TODO : Tigger alarm
 
+@celery.task
+def crying_check() :
+	"""Check baby crying and trigger alarm to Android app.
+	
+	@Imput    .
+	@Return   .
+	"""
+	
+	log.info('Check baby crying')
+	
+	global refresh_rate
+	energy = sound_level(0.3 * refresh_rate)
+	
+	if (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
+		# Criying state
+		log.debug('Criying state !!!')
+		#TODO : Tigger alarm
+
 def terminate() :
 	"""Free resources.
 	
@@ -96,6 +115,7 @@ def terminate() :
 	log.info('Free resources')
 
 	signal.alarm(0)
+	signal.setitimer(signal.ITIMER_PROF, 0)
 	GPIO.cleanup()
 	exit(0)
 
@@ -114,10 +134,13 @@ def handler(signum, frame) :
 	if (signum == signal.SIGTERM) :
 		terminate()
 	elif (signum == signal.SIGALRM) :
-		activity_check()
 		act_job = activity_check.delay()
 		result = act_job.AsyncResult(act_job.id).state
 		log.debug('activity check result : %s',result)
+	elif (signum == signal.SIGPROF) :
+		cry_job = crying_check.delay()
+		result = cry_job.AsyncResult(cry_job.id).state
+		log.debug('crying check result : %s',result)
 
 def activity_ctr_start()() :
 	"""Start Motion for activity control.
@@ -128,9 +151,12 @@ def activity_ctr_start()() :
 	
 	log.info('Start Motion')
 	
+	global refresh_rate
 	if (signal.getsignal(signal.SIGALRM) == None) :
 		# Set the signal handler
 		signal.signal(signal.SIGALRM, handler)
+		# Set timer for Crying controler
+		signal.signal(signal.ITIMER_PROF, handler)
 	
 	# Send resume command to Motion
 	try :
@@ -139,6 +165,10 @@ def activity_ctr_start()() :
 	except CalledProcessError as e:
 		log.exception('Motion resume error : %s',e.returncode)
 		result = 'Error'
+		
+	# launch timer for crying check
+	refresh_rate = app.config['REFRESH_RATE']
+	signal.setitimer(signal.ITIMER_PROF, refresh_rate, refresh_rate)
 	
 def activity_ctr_stop()() :
 	"""Stop Motion and activity control.
@@ -156,6 +186,9 @@ def activity_ctr_stop()() :
 	except CalledProcessError as e:
 		log.exception('Motion resume error : %s',e.returncode)
 		result = 'Error'
+		
+	# Stop timer for crying check
+	signal.setitimer(signal.ITIMER_PROF, 0)
 
 def activity_event_begin() :
 	"""A Baby event has started.
@@ -181,7 +214,7 @@ def activity_event_end() :
 	# cancel alarm
 	signal.alarm(0)
 
-def normal_levels(agi_normal) :
+def normal_levels() :
 	"""Calibrate the normal level to actual sound level.
 	
 	@Imput    .
