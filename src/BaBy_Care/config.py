@@ -29,6 +29,8 @@ NORMAL_INTERVAL = 10
 ACTIVE_INTERVAL = 20
 # Normal agitation time in second. This is the max period of agitation before launching an alarm 
 AGI_NORMAL = 10
+# Normal check period for crying in second
+CRY_NORMAL = 30
 
 # Number of inadequate Motion agitation detection and sound activity detection before decrising norma level
 STATE_ERROR = 5
