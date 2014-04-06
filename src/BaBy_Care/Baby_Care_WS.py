@@ -4,7 +4,7 @@ Created on Feb 19, 2014
 @author: nabillo
 '''
 
-from BaBy_Care import app, log,db, Celery
+from BaBy_Care import app, log
 from Baby_Care_Activity import activity_ctr_start, activity_ctr_stop, activity_event_begin, activity_event_end, normal_levels
 from flask import request, jsonify
 

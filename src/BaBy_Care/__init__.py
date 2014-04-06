@@ -41,6 +41,8 @@ def before_first_request():
         db['active_interval'] = app.config['ACTIVE_INTERVAL']
     if not db.has_key('agi_normal') :
         db['agi_normal'] = app.config['AGI_NORMAL']
+    if not db.has_key('agi_normal') :
+        db['cry_normal'] = app.config['CRY_NORMAL']
 
 import Baby_Care_WS
 
