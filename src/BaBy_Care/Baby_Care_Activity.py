@@ -5,10 +5,9 @@ Created on Feb 19, 2014
 '''
 
 import alsaaudio, audioop
-from BaBy_Care import app, celery, log, db
-
 import signal
-import RPi.GPIO as GPIO
+from BaBy_Care import app, celery, log, db
+from subprocess import check_call, CalledProcessError
 
 
 # constants
@@ -19,7 +18,8 @@ INFORMAT    = alsaaudio.PCM_FORMAT_FLOAT_LE
 RATE        = 16000
 FRAMESIZE   = 1024
 
-global state_err
+global state_err1
+global state_err2
 
 def sound_level() :
 	"""calculate sound level.
@@ -55,7 +55,8 @@ def activity_check() :
 	
 	log.info('Evaluate sound and agitation level')
 	
-	global state_err
+	global state_err1
+	global state_err2
 	energy = sound_level()
 	
 	if (energy < db['lvl_normal']) :
@@ -73,7 +74,7 @@ def activity_check() :
 		state_err2 = state_err2 + 1
 		# We reduce the normal level if that has has been reproduced many times
 		if (state_err2 > app.config['STATE_ERROR']) :
-			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE'])/100)
+			db['lvl_normal'] = db['lvl_normal'] * app.config['REDUCTION_RATE']/100
 			state_err2 = 0
 			
 	elif ((energy >= db['lvl_normal'] + db['normal_interval']) and (energy < db['lvl_normal'] + db['normal_interval'] + db['active_interval'])) :
@@ -96,7 +97,7 @@ def terminate() :
 	log.info('Free resources')
 
 	signal.alarm(0)
-	GPIO.cleanup()
+	#GPIO.cleanup()
 	exit(0)
 
 def handler(signum, frame) :
@@ -119,7 +120,7 @@ def handler(signum, frame) :
 		result = act_job.AsyncResult(act_job.id).state
 		log.debug('activity check result : %s',result)
 
-def activity_ctr_start()() :
+def activity_ctr_start() :
 	"""Start Motion for activity control.
 	
 	@Imput    .
@@ -140,7 +141,9 @@ def activity_ctr_start()() :
 		log.exception('Motion resume error : %s',e.returncode)
 		result = 'Error'
 	
-def activity_ctr_stop()() :
+	return result
+	
+def activity_ctr_stop():
 	"""Stop Motion and activity control.
 	
 	@Imput    .
@@ -156,6 +159,9 @@ def activity_ctr_stop()() :
 	except CalledProcessError as e:
 		log.exception('Motion resume error : %s',e.returncode)
 		result = 'Error'
+		
+	# Stop timer for crying check
+	signal.setitimer(signal.ITIMER_PROF, 0)
 
 def activity_event_begin() :
 	"""A Baby event has started.
