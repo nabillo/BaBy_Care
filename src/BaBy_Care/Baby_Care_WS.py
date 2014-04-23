@@ -14,7 +14,7 @@ def activity_ctr() :
 	
 	@Imput    command : [Start,Stop,Event,Calibrate].
 			agi_normal (decimal).
-	@Return   result : [In progress,Success,Stoped,Error,None].
+	@Return   result : [In progress,Success,Stopped,Error,None].
 	"""
 	
 	log.info('activity_ctr BEGIN')
@@ -34,7 +34,7 @@ def activity_ctr() :
 			activity_event_end()
 		result = ""
 	elif (data['command'] == 'Calibrate') :
-		# Calibrate the normale sound level
+		# Calibrate the normal sound level
 		result = normal_levels(data['agi_normal'])
 		#TODO : adjust intervals
 	else :

@@ -6,6 +6,7 @@ Created on Feb 19, 2014
 
 import alsaaudio, audioop
 from BaBy_Care import app, celery, log, db
+from subprocess import check_call, CalledProcessError
 
 import signal
 import RPi.GPIO as GPIO
@@ -19,7 +20,8 @@ INFORMAT    = alsaaudio.PCM_FORMAT_FLOAT_LE
 RATE        = 16000
 FRAMESIZE   = 1024
 
-global state_err
+global state_err1
+global state_err2
 global refresh_rate
 
 def sound_level(framesize) :
@@ -68,24 +70,24 @@ def activity_check() :
 			db['lvl_normal'] = db['lvl_normal'] * ((2 * app.config['REDUCTION_RATE'])/100)
 			state_err1 = 0
 		
-	elif ((energy >= db['lvl_normal']) and (energy < db['lvl_normal'] + db['normal_interval'])) :
+	elif ((energy >= db['lvl_normal']) and (energy < db['lvl_BaBy_Carenormal'] + db['normal_interval'])) :
 		# Normal state
 		log.debug('Normal state with agitation')
 		state_err2 = state_err2 + 1
 		# We reduce the normal level if that has has been reproduced many times
 		if (state_err2 > app.config['STATE_ERROR']) :
-			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE'])/100)
+			db['lvl_normal'] = db['lvl_normal'] * (app.config['REDUCTION_RATE']/100)
 			state_err2 = 0
 			
 	elif ((energy >= db['lvl_normal'] + db['normal_interval']) and (energy < db['lvl_normal'] + db['normal_interval'] + db['active_interval'])) :
 		# Active state
 		log.debug('Active state with agitation')
-		#TODO : Tigger alarm
+		#TODO : Trigger alarm
 		
 	elif (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
-		# Criying state
-		log.debug('Criying state with agitation !!!')
-		#TODO : Tigger alarm
+		# Crying state
+		log.debug('Crying state with agitation !!!')
+		#TODO : Trigger alarm
 
 @celery.task
 def crying_check() :
@@ -100,9 +102,9 @@ def crying_check() :
 	energy = sound_level(0.3 * db['cry_normal'])
 	
 	if (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
-		# Criying state
-		log.debug('Criying state !!!')
-		#TODO : Tigger alarm
+		# Crying state
+		log.debug('Crying state !!!')
+		#TODO : Trigger alarm
 
 def terminate() :
 	"""Free resources.
@@ -129,19 +131,21 @@ def handler(signum, frame) :
 	"""
 	
 	log.info('Signals handler')
-	log.debug('signal : %d',signum)
+	log.debug('signal : %d , SIGALRM : %d, SIGPROF : %d',signum,signal.SIGALRM,signal.SIGPROF)
 	if (signum == signal.SIGTERM) :
 		terminate()
 	elif (signum == signal.SIGALRM) :
 		act_job = activity_check.delay()
-		result = act_job.AsyncResult(act_job.id).state
+		result = act_job.state
 		log.debug('activity check result : %s',result)
 	elif (signum == signal.SIGPROF) :
 		cry_job = crying_check.delay()
-		result = cry_job.AsyncResult(cry_job.id).state
+		result = cry_job.state
 		log.debug('crying check result : %s',result)
+	else :
+		log.debug('not handled ')
 
-def activity_ctr_start()() :
+def activity_ctr_start() :
 	"""Start Motion for activity control.
 	
 	@Imput    .
@@ -150,15 +154,18 @@ def activity_ctr_start()() :
 	
 	log.info('Start Motion')
 	
-	if (signal.getsignal(signal.SIGALRM) == None) :
-		# Set the signal handler
-		signal.signal(signal.SIGALRM, handler)
-		# Set timer for Crying controler
-		signal.signal(signal.ITIMER_PROF, handler)
+# 	if (signal.getsignal(signal.SIGALRM) == signal.SIG_DFL) :
+# 		log.debug('set signal ')
+# 		# Set the signal handler
+# 		signal.signal(signal.SIGALRM, handler)
+# 		# Set timer for Crying controller
+# 		signal.signal(signal.ITIMER_PROF, handler)
+		
+	log.debug('signal.SIGALRM : %s',signal.getsignal(signal.SIGALRM))
 	
 	# Send resume command to Motion
 	try :
-		check_call(["motion-control","detection","resume",0])
+		#check_call(["motion-control","detection","resume","0"])
 		result = 'Success'
 	except CalledProcessError as e:
 		log.exception('Motion resume error : %s',e.returncode)
@@ -167,7 +174,9 @@ def activity_ctr_start()() :
 	# launch timer for crying check
 	signal.setitimer(signal.ITIMER_PROF, db['cry_normal'], db['cry_normal'])
 	
-def activity_ctr_stop()() :
+	return result
+
+def activity_ctr_stop() :
 	"""Stop Motion and activity control.
 	
 	@Imput    .
@@ -178,7 +187,7 @@ def activity_ctr_stop()() :
 	
 	# Send resume command to Motion
 	try :
-		check_call(["motion-control","detection","pause",0])
+		check_call(["motion-control","detection","pause","0"])
 		result = 'Success'
 	except CalledProcessError as e:
 		log.exception('Motion resume error : %s',e.returncode)
@@ -186,6 +195,8 @@ def activity_ctr_stop()() :
 		
 	# Stop timer for crying check
 	signal.setitimer(signal.ITIMER_PROF, 0)
+	
+	return result
 
 def activity_event_begin() :
 	"""A Baby event has started.

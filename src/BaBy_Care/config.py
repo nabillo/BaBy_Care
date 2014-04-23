@@ -18,8 +18,8 @@ LOG_FILE = 'BaBy_Care.log'
 
 # Celery broker and backend url
 #TODO : normalyse ports
-CELERY_BROKER_URL = 'redis://localhost:6379',
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_BROKER_URL = 'amqp://',
+CELERY_RESULT_BACKEND = 'amqp'
 
 # Sound normal level
 LVL_NORMAL = 100
