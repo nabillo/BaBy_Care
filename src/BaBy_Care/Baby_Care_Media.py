@@ -50,7 +50,7 @@ def media_del(files) :
 	for file in files:
 		try :
 			#delete file from directory
-			subprocess.call('rm -f %s',file)
+			subprocess.call('rm -f %s/%s',app.config['UPLOAD_FOLDER'],file)
 			
 			log.debug('file deleted : %s',file)
 			result = result + 1
@@ -71,7 +71,7 @@ def media_list() :
 	log.info('List songs')
 	try :
 		#TODO : list command
-		titles = subprocess.check_output('')
+		titles = subprocess.check_output(["ls", "-tr"], shell=True)
 		
 		log.debug('Playlist titles : %s',titles)
 		titles = titles.splitlines()
