@@ -94,7 +94,7 @@ def media_Play() :
 	
 	log.info('Play songs')
 	try :
-		subprocess.call(["mpc", "play"])
+		subprocess.call(["mpc", "-q", "play"])
 	
 		log.debug('Play')
 		result = 'Success'
@@ -111,7 +111,7 @@ def media_Stop() :
 	
 	log.info('Stop songs')
 	try :
-		subprocess.call(["mpc", "stop"])
+		subprocess.call(["mpc", "-q", "stop"])
 	
 		log.debug('stop')
 		result = 'Success'
