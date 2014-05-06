@@ -37,7 +37,9 @@ def media_upload(files) :
 			log.warning('file not allowed : %s',filename)
 	
 	# Reload all song on playlist
-	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
+	subprocess.call(["mpc", "clear"])
+	subprocess.call(["mpc", "add", app.config['UPLOAD_FOLDER']])
+	subprocess.call(["mpc", "update"])
 	
 	log.debug('result : %s',result)
 	return result
@@ -50,7 +52,8 @@ def media_del(files) :
 	for file in files:
 		try :
 			#delete file from directory
-			subprocess.call('rm -f %s/%s',app.config['UPLOAD_FOLDER'],file)
+			subprocess.call(["rm", "-f", os.path.join(app.config['UPLOAD_FOLDER'], filename)])
+			
 			
 			log.debug('file deleted : %s',file)
 			result = result + 1
@@ -60,7 +63,9 @@ def media_del(files) :
 			log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 	
 	# Reload all song on playlist
-	subprocess.call('mpc clear; mpc add %s; mpc update',app.config['UPLOAD_FOLDER'])
+	subprocess.call(["mpc", "clear"])
+	subprocess.call(["mpc", "add", app.config['UPLOAD_FOLDER']])
+	subprocess.call(["mpc", "update"])
 	
 	log.debug('result : %s',result)
 	return result
@@ -77,7 +82,6 @@ def media_list() :
 		titles = titles.splitlines()
 		result = titles
 	except subprocess.CalledProcessError :
-		# file not deleted
 		log.error('list error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
@@ -90,12 +94,11 @@ def media_Play() :
 	
 	log.info('Play songs')
 	try :
-		subprocess.call('mpc play ')
+		subprocess.call(["mpc", "play"])
 	
 		log.debug('Play')
 		result = 'Success'
 	except subprocess.CalledProcessError :
-		# file not deleted
 		log.error('Play error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
@@ -108,12 +111,11 @@ def media_Stop() :
 	
 	log.info('Stop songs')
 	try :
-		subprocess.call('mpc stop ')
+		subprocess.call(["mpc", "stop"])
 	
 		log.debug('stop')
 		result = 'Success'
 	except subprocess.CalledProcessError :
-		# file not deleted
 		log.error('stop error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
@@ -126,12 +128,11 @@ def media_VolUp() :
 	
 	log.info('Volume Up')
 	try :
-		subprocess.call('mpc volume + ')
+		subprocess.call(["mpc", "volume", "+"])
 	
 		log.debug('Volume increased')
 		result = 'Success'
 	except subprocess.CalledProcessError :
-		# file not deleted
 		log.error('Volume increase error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
@@ -144,12 +145,11 @@ def media_VolDown() :
 	
 	log.info('Volume Down')
 	try :
-		subprocess.call('mpc volume - ')
+		subprocess.call(["mpc", "volume", "-"])
 	
 		log.debug('Volume decreased')
 		result = 'Success'
 	except subprocess.CalledProcessError :
-		# file not deleted
 		log.error('Volume decrease error')
 		log.warning('Return code : %s',subprocess.CalledProcessError.returncode)
 		result = 'Error'
