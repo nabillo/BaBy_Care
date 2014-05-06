@@ -50,7 +50,7 @@ def media_ctr() :
 	"""Control media center.
 	
 	@Imput    command : [Upload,Delete,List,Play,Stop,VolUp,VolDown].
-	          titles.
+			titles.
 	@Return   result : [%d,list,Success,Error].
 	"""
 	
@@ -82,4 +82,29 @@ def media_ctr() :
 	log.info('media_ctr END')
 	return jsonify(result=result)
 	
+@app.route('/voice_ctr.json', methods=['POST'])
+def voice_ctr() :
+	"""Control voice chat.
+	
+	@Imput    command : [Start,Stop].
+	@Return   result : [Success,Stopped,Error].
+	"""
+	
+	log.info('voice_ctr BEGIN')
+	
+	# Get the JSON data sent from the form
+	data = request.get_json(force=True)
+	
+	log.info(data['command'])
+	if (data['command'] == 'Start') :
+		result = voice_ctr_start()
+	elif (data['command'] == 'Stop') :
+		result = voice_ctr_stop()
+	else :
+		log.warning('invalid command')
+		result = 'None'
+	
+	log.debug(result)
+	log.info('voice_ctr END')
+	return jsonify(result=result)
 	
