@@ -87,6 +87,7 @@ def voice_ctr() :
 	"""Control voice chat.
 	
 	@Imput    command : [Start,Stop].
+		host_url : url of client chat
 	@Return   result : [Success,Stopped,Error].
 	"""
 	
@@ -97,7 +98,7 @@ def voice_ctr() :
 	
 	log.info(data['command'])
 	if (data['command'] == 'Start') :
-		result = voice_ctr_start()
+		result = voice_ctr_start(data['host_url'])
 	elif (data['command'] == 'Stop') :
 		result = voice_ctr_stop()
 	else :
