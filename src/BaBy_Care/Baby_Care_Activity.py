@@ -23,6 +23,7 @@ FRAMESIZE   = 1024
 global state_err1
 global state_err2
 global refresh_rate
+global activity_status
 
 def sound_level(framesize) :
 	"""calculate sound level.
@@ -152,29 +153,12 @@ def activity_ctr_start() :
 	@Return   .
 	"""
 	
+	global activity_status
 	log.info('Start Motion')
-	
-# 	if (signal.getsignal(signal.SIGALRM) == signal.SIG_DFL) :
-# 		log.debug('set signal ')
-# 		# Set the signal handler
-# 		signal.signal(signal.SIGALRM, handler)
-# 		# Set timer for Crying controller
-# 		signal.signal(signal.ITIMER_PROF, handler)
 		
-	log.debug('signal.SIGALRM : %s',signal.getsignal(signal.SIGALRM))
-	
-	# Send resume command to Motion
-	try :
-		#check_call(["motion-control","detection","resume","0"])
-		result = 'Success'
-	except CalledProcessError as e:
-		log.exception('Motion resume error : %s',e.returncode)
-		result = 'Error'
-		
+	activity_status = True
 	# launch timer for crying check
 	signal.setitimer(signal.ITIMER_PROF, db['cry_normal'], db['cry_normal'])
-	
-	return result
 
 def activity_ctr_stop() :
 	"""Stop Motion and activity control.
@@ -185,18 +169,9 @@ def activity_ctr_stop() :
 	
 	log.info('Stop Motion')
 	
-	# Send resume command to Motion
-	try :
-		check_call(["motion-control","detection","pause","0"])
-		result = 'Success'
-	except CalledProcessError as e:
-		log.exception('Motion resume error : %s',e.returncode)
-		result = 'Error'
-		
+	activity_status = False
 	# Stop timer for crying check
 	signal.setitimer(signal.ITIMER_PROF, 0)
-	
-	return result
 
 def activity_event_begin() :
 	"""A Baby event has started.
@@ -207,8 +182,9 @@ def activity_event_begin() :
 	
 	log.info('Baby Event started')
 	
-	# setup alarm to evaluate agitation level
-	signal.alarm(db['agi_normal'] )
+	if (activity_status == True) :
+		# setup alarm to evaluate agitation level
+		signal.alarm(db['agi_normal'] )
 
 def activity_event_end() :
 	"""A Baby event has ended.
