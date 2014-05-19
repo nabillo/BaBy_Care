@@ -50,4 +50,7 @@ MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
 # GPIO port number
 GPIO_CHANNEL = 23
-  
+
+# Alarm Port
+ALARM_PORT = 12900
+
