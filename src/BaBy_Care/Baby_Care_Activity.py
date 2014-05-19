@@ -19,6 +19,7 @@ CHANNELS    = 1
 INFORMAT    = alsaaudio.PCM_FORMAT_FLOAT_LE
 RATE        = 16000
 FRAMESIZE   = 1024
+trigger_ID  = 'BaBy_Care : '
 
 global state_err1
 global state_err2
@@ -146,7 +147,7 @@ def handler(signum, frame) :
 	else :
 		log.debug('not handled ')
 
-def activity_ctr_start() :
+def activity_ctr_start(url) :
 	"""Start Motion for activity control.
 	
 	@Imput    .
@@ -155,12 +156,16 @@ def activity_ctr_start() :
 	
 	global activity_status
 	log.info('Start Motion')
-		
+	
+	# Add host to trigger list
+	if (db['host_url'].count(url) <= 0) :
+		db['host_url'].append(url)
+	
 	activity_status = True
 	# launch timer for crying check
 	signal.setitimer(signal.ITIMER_PROF, db['cry_normal'], db['cry_normal'])
 
-def activity_ctr_stop() :
+def activity_ctr_stop(url) :
 	"""Stop Motion and activity control.
 	
 	@Imput    .
@@ -169,6 +174,10 @@ def activity_ctr_stop() :
 	
 	log.info('Stop Motion')
 	
+	# Remove host to trigger list
+	if (db['host_url'].count(url) > 0) :
+		db['host_url'].remove(url)
+
 	activity_status = False
 	# Stop timer for crying check
 	signal.setitimer(signal.ITIMER_PROF, 0)
@@ -216,4 +225,24 @@ def normal_levels(agi_normal, cry_normal) :
 		log.exception('Calibration error')
 		result = 'Error'
 	return result 
+	
+def trigger_Alarm(level) :
+	"""trigger alarm to connected host with corresponding level.
+	
+	@Imput    level : alarm level.
+	@Return   .
+	"""
+	
+	log.info('trigger alarm')
+	s = socket(AF_INET, SOCK_STREAM)
+	# Loop on connected host
+	for url in db['host_url']
+		try :
+			s.connect((url, app.config['LVL_NORMAL']))
+			s.send(trigger_ID+level)
+			rep = s.recv(2)
+		except :
+			log.exception('alarm error')
+			
+		
 		
