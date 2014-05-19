@@ -14,12 +14,15 @@ import RPi.GPIO as GPIO
 
 # constants
 
-CARD        = 'sysdefault:CARD=CameraB409241'
-CHANNELS    = 1
-INFORMAT    = alsaaudio.PCM_FORMAT_FLOAT_LE
-RATE        = 16000
-FRAMESIZE   = 1024
-trigger_ID  = 'BaBy_Care : '
+CARD         = 'sysdefault:CARD=CameraB409241'
+CHANNELS     = 1
+INFORMAT     = alsaaudio.PCM_FORMAT_FLOAT_LE
+RATE         = 16000
+FRAMESIZE    = 1024
+TRIGGER_ID   = 'BaBy_Care : '
+ACTIVE_ALARM = 1
+AGITATION_ALARM = 2
+CRYING_ALARM    = 3
 
 global state_err1
 global state_err2
@@ -85,11 +88,13 @@ def activity_check() :
 		# Active state
 		log.debug('Active state with agitation')
 		#TODO : Trigger alarm
+		trigger_Alarm(level=ACTIVE_ALARM)
 		
 	elif (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
 		# Crying state
 		log.debug('Crying state with agitation !!!')
 		#TODO : Trigger alarm
+		trigger_Alarm(level=AGITATION_ALARM)
 
 @celery.task
 def crying_check() :
@@ -107,6 +112,7 @@ def crying_check() :
 		# Crying state
 		log.debug('Crying state !!!')
 		#TODO : Trigger alarm
+		trigger_Alarm(level=CRYING_ALARM)
 
 def terminate() :
 	"""Free resources.
@@ -226,7 +232,7 @@ def normal_levels(agi_normal, cry_normal) :
 		result = 'Error'
 	return result 
 	
-def trigger_Alarm(level) :
+def trigger_Alarm(level, host_url=none) :
 	"""trigger alarm to connected host with corresponding level.
 	
 	@Imput    level : alarm level.
@@ -235,14 +241,27 @@ def trigger_Alarm(level) :
 	
 	log.info('trigger alarm')
 	s = socket(AF_INET, SOCK_STREAM)
+	if (host_url is not none) :
+		s.connect((host_url, app.config['ALARM_PORT']))
+		s.send(trigger_ID+level)
+		return 'Success'
 	# Loop on connected host
 	for url in db['host_url']
 		try :
-			s.connect((url, app.config['LVL_NORMAL']))
-			s.send(trigger_ID+level)
+			s.connect((url, app.config['ALARM_PORT']))
+			s.sendall(trigger_ID+level)
 			rep = s.recv(2)
-		except :
-			log.exception('alarm error')
+			# retry for this host
+			if (rep is null or rep = "") :
+				result = trigger_Alarm(level, url)
+				log.debug('alarm retry result : %s',result)
 			
+		except :
+			log.exception('alarm error on host : %s',url)
+			# retry for this host
+			result = trigger_Alarm(level, url)
+			log.debug('alarm retry result : %s',result)
 		
-		
+	return 'Success'
+	
+	
