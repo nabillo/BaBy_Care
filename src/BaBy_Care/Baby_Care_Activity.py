@@ -108,7 +108,13 @@ def crying_check() :
 	
 	energy = sound_level(0.3 * db['cry_normal'])
 	
-	if (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
+	if ((energy >= db['lvl_normal'] + db['normal_interval']) and (energy < db['lvl_normal'] + db['normal_interval'] + db['active_interval'])) :
+		# Active state
+		log.debug('Active state with agitation')
+		#TODO : Trigger alarm
+		trigger_Alarm(level=ACTIVE_ALARM)
+	
+	elif (energy >= db['lvl_normal'] + db['normal_interval'] + db['active_interval']) :
 		# Crying state
 		log.debug('Crying state !!!')
 		#TODO : Trigger alarm
