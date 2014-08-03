@@ -10,15 +10,17 @@ from subprocess import check_call, CalledProcessError
 
 import signal
 import RPi.GPIO as GPIO
+from _socket import socket, AF_INET, SOCK_STREAM
+import sched ,time
 
 
 # constants
 
-CARD         = 'sysdefault:CARD=CameraB409241'
-CHANNELS     = 1
-INFORMAT     = alsaaudio.PCM_FORMAT_FLOAT_LE
+CARD         = 'iec958:CARD=CameraB409241'
+CHANNELS     = 4
+INFORMAT     = alsaaudio.PCM_FORMAT_S16_LE
 RATE         = 16000
-FRAMESIZE    = 1024
+FRAMESIZE    = 512
 TRIGGER_ID   = 'BaBy_Care : '
 ACTIVE_ALARM = 1
 AGITATION_ALARM = 2
@@ -148,11 +150,11 @@ def handler(signum, frame) :
 	log.debug('signal : %d , SIGALRM : %d, SIGPROF : %d',signum,signal.SIGALRM,signal.SIGPROF)
 	if (signum == signal.SIGTERM) :
 		terminate()
+# 	elif (signum == signal.SIGALRM) :
+# 		act_job = activity_check.delay()
+# 		result = act_job.state
+# 		log.debug('activity check result : %s',result)
 	elif (signum == signal.SIGALRM) :
-		act_job = activity_check.delay()
-		result = act_job.state
-		log.debug('activity check result : %s',result)
-	elif (signum == signal.SIGPROF) :
 		cry_job = crying_check.delay()
 		result = cry_job.state
 		log.debug('crying check result : %s',result)
@@ -170,12 +172,15 @@ def activity_ctr_start(url) :
 	log.info('Start Motion')
 	
 	# Add host to trigger list
-	if (db['host_url'].count(url) <= 0) :
+	if (db.has_key('host_url') and db['host_url'].count(url) <= 0) :
 		db['host_url'].append(url)
 	
 	activity_status = True
 	# launch timer for crying check
-	signal.setitimer(signal.ITIMER_PROF, db['cry_normal'], db['cry_normal'])
+	log.debug(db['cry_normal'])
+	(v_deley, v_interval) = signal.setitimer(signal.ITIMER_REAL, db['cry_normal'], db['cry_normal'])
+	log.debug(v_deley)
+	log.debug(v_interval)
 
 def activity_ctr_stop(url) :
 	"""Stop Motion and activity control.
@@ -187,12 +192,12 @@ def activity_ctr_stop(url) :
 	log.info('Stop Motion')
 	
 	# Remove host to trigger list
-	if (db['host_url'].count(url) > 0) :
+	if (db.has_key('host_url') and db['host_url'].count(url) > 0) :
 		db['host_url'].remove(url)
 
 	activity_status = False
 	# Stop timer for crying check
-	signal.setitimer(signal.ITIMER_PROF, 0)
+	signal.setitimer(signal.ITIMER_REAL, 0)
 
 def activity_event_begin() :
 	"""A Baby event has started.
@@ -205,7 +210,11 @@ def activity_event_begin() :
 	
 	if (activity_status == True) :
 		# setup alarm to evaluate agitation level
-		signal.alarm(db['agi_normal'] )
+#		signal.alarm(db['agi_normal'] )
+		act_job = activity_check.delay(countdown=db['agi_normal'])
+		result = act_job.state
+		log.debug('activity check result : %s',result)
+		
 
 def activity_event_end() :
 	"""A Baby event has ended.
@@ -228,7 +237,7 @@ def normal_levels(agi_normal, cry_normal) :
 	
 	log.info('Calibration')
 	try :
-		db['lvl_normal'] = sound_level()
+		db['lvl_normal'] = sound_level(FRAMESIZE)
 		db['agi_normal'] = agi_normal
 		db['cry_normal'] = cry_normal
 		log.debug("lvl_normal : %f, agi_normal %d, cry_normal %d",db['lvl_normal'],db['agi_normal'],db['cry_normal'])
@@ -238,35 +247,36 @@ def normal_levels(agi_normal, cry_normal) :
 		result = 'Error'
 	return result 
 	
-def trigger_Alarm(level, host_url=none) :
+def trigger_Alarm(level, host_url=None) :
 	"""trigger alarm to connected host with corresponding level.
 	
 	@Imput    level : alarm level.
 	@Return   .
 	"""
+	trigger_ID="Alarm"
 	
 	log.info('trigger alarm')
-	s = socket(AF_INET, SOCK_STREAM)
-	if (host_url is not none) :
-		s.connect((host_url, app.config['ALARM_PORT']))
-		s.send(trigger_ID+level)
-		return 'Success'
-	# Loop on connected host
-	for url in db['host_url']
-		try :
-			s.connect((url, app.config['ALARM_PORT']))
-			s.sendall(trigger_ID+level)
-			rep = s.recv(2)
-			# retry for this host
-			if (rep is null or rep = "") :
-				result = trigger_Alarm(level, url)
-				log.debug('alarm retry result : %s',result)
-			
-		except :
-			log.exception('alarm error on host : %s',url)
-			# retry for this host
-			result = trigger_Alarm(level, url)
-			log.debug('alarm retry result : %s',result)
+# 	s = socket(AF_INET, SOCK_STREAM)
+# 	if (host_url is not None) :
+# 		s.connect((host_url, app.config['ALARM_PORT']))
+# 		s.send(trigger_ID+level)
+# 		return 'Success'
+# 	# Loop on connected host
+# 	for url in db['host_url'] :
+# 		try :
+# 			s.connect((url, app.config['ALARM_PORT']))
+# 			s.sendall(trigger_ID+level)
+# 			rep = s.recv(2)
+# 			# retry for this host
+# 			if ((rep is None) or (rep == "")) :
+# 				result = trigger_Alarm(level, url)
+# 				log.debug('alarm retry result : %s',result)
+# 			
+# 		except :
+# 			log.exception('alarm error on host : %s',url)
+# 			# retry for this host
+# 			result = trigger_Alarm(level, url)
+# 			log.debug('alarm retry result : %s',result)
 		
 	return 'Success'
 	

@@ -14,6 +14,8 @@ def activity_ctr() :
 	
 	@Imput    command : [Start,Stop,Event,Calibrate].
 			agi_normal (decimal).
+			cry_normal (decimal).
+			url (string).
 	@Return   result : [In progress,Success,Stopped,Error,None].
 	"""
 	
@@ -24,9 +26,9 @@ def activity_ctr() :
 	
 	log.info(data['command'])
 	if (data['command'] == 'Start') :
-		result = activity_ctr_start()
+		result = activity_ctr_start(data['url'])
 	elif (data['command'] == 'Stop') :
-		result = activity_ctr_stop()
+		result = activity_ctr_stop(data['url'])
 	elif (data['command'] == 'Event') :
 		if (data['state'] == 'Begin') :
 			activity_event_begin()
@@ -35,7 +37,7 @@ def activity_ctr() :
 		result = ""
 	elif (data['command'] == 'Calibrate') :
 		# Calibrate the normal sound level
-		result = normal_levels(data['agi_normal'])
+		result = normal_levels(data['agi_normal'],data['cry_normal'])
 		#TODO : adjust intervals
 	else :
 		log.warning('invalid command')
